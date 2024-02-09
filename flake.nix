@@ -21,7 +21,7 @@
 
             shellHook = ''
               echo "entering shell.."
-              PS1="\e[1;34m[nix-develop] \w$ \e[0m"
+              PS1="\e[1;34m[nix] \w$ \e[0m"
               echo "$(${pkgs.haskell.compiler.ghc964}/bin/ghc --version)"
             '';
           };
