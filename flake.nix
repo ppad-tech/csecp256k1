@@ -9,20 +9,22 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs  = nixpkgs.legacyPackages.${system};
+        ghc   = pkgs.haskell.compiler.ghc964;
+        cabal = pkgs.haskell.packages.ghc964.cabal-install;
       in
         {
           devShells.default = pkgs.mkShell {
             buildInputs = [
-              pkgs.secp256k1
-              pkgs.haskell.compiler.ghc964
-              pkgs.haskell.packages.ghc964.cabal-install
+              ghc
+              cabal
             ];
 
             shellHook = ''
-              echo "entering shell.."
-              PS1="\e[1;34m[nix] \w$ \e[0m"
-              echo "$(${pkgs.haskell.compiler.ghc964}/bin/ghc --version)"
+              PS1="[nix] \w$ "
+              echo "entering shell, using"
+              echo "ghc:   $(${ghc}/bin/ghc --version)"
+              echo "cabal: $(${cabal}/bin/cabal --version)"
             '';
           };
         }
