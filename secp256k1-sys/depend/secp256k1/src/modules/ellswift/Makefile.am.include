@@ -1,0 +1,5 @@
+include_HEADERS += include/haskellsecp256k1_v0_1_0_ellswift.h
+noinst_HEADERS += src/modules/ellswift/bench_impl.h
+noinst_HEADERS += src/modules/ellswift/main_impl.h
+noinst_HEADERS += src/modules/ellswift/tests_impl.h
+noinst_HEADERS += src/modules/ellswift/tests_exhaustive_impl.h
