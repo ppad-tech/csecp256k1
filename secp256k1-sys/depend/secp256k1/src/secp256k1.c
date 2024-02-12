@@ -137,6 +137,17 @@ haskellsecp256k1_v0_1_0_context* haskellsecp256k1_v0_1_0_context_preallocated_cr
     return ret;
 }
 
+haskellsecp256k1_v0_1_0_context* haskellsecp256k1_v0_1_0_context_create(unsigned int flags) {
+    size_t const prealloc_size = haskellsecp256k1_v0_1_0_context_preallocated_size(flags);
+    haskellsecp256k1_v0_1_0_context* ctx = (haskellsecp256k1_v0_1_0_context*)checked_malloc(&default_error_callback, prealloc_size);
+    if (EXPECT(haskellsecp256k1_v0_1_0_context_preallocated_create(ctx, flags) == NULL, 0)) {
+        free(ctx);
+        return NULL;
+    }
+
+    return ctx;
+}
+
 haskellsecp256k1_v0_1_0_context* haskellsecp256k1_v0_1_0_context_preallocated_clone(const haskellsecp256k1_v0_1_0_context* ctx, void* prealloc) {
     haskellsecp256k1_v0_1_0_context* ret;
     VERIFY_CHECK(ctx != NULL);
@@ -145,6 +156,19 @@ haskellsecp256k1_v0_1_0_context* haskellsecp256k1_v0_1_0_context_preallocated_cl
 
     ret = (haskellsecp256k1_v0_1_0_context*)prealloc;
     *ret = *ctx;
+    return ret;
+}
+
+haskellsecp256k1_v0_1_0_context* haskellsecp256k1_v0_1_0_context_clone(const haskellsecp256k1_v0_1_0_context* ctx) {
+    haskellsecp256k1_v0_1_0_context* ret;
+    size_t prealloc_size;
+
+    VERIFY_CHECK(ctx != NULL);
+    ARG_CHECK(haskellsecp256k1_v0_1_0_context_is_proper(ctx));
+
+    prealloc_size = haskellsecp256k1_v0_1_0_context_preallocated_clone_size(ctx);
+    ret = (haskellsecp256k1_v0_1_0_context*)checked_malloc(&ctx->error_callback, prealloc_size);
+    ret = haskellsecp256k1_v0_1_0_context_preallocated_clone(ctx, ret);
     return ret;
 }
 
@@ -157,6 +181,18 @@ void haskellsecp256k1_v0_1_0_context_preallocated_destroy(haskellsecp256k1_v0_1_
     }
 
     haskellsecp256k1_v0_1_0_ecmult_gen_context_clear(&ctx->ecmult_gen_ctx);
+}
+
+void haskellsecp256k1_v0_1_0_context_destroy(haskellsecp256k1_v0_1_0_context* ctx) {
+    ARG_CHECK_VOID(ctx == NULL || haskellsecp256k1_v0_1_0_context_is_proper(ctx));
+
+    /* Defined as noop */
+    if (ctx == NULL) {
+        return;
+    }
+
+    haskellsecp256k1_v0_1_0_context_preallocated_destroy(ctx);
+    free(ctx);
 }
 
 void haskellsecp256k1_v0_1_0_context_set_illegal_callback(haskellsecp256k1_v0_1_0_context* ctx, void (*fun)(const char* message, void* data), const void* data) {
@@ -181,6 +217,16 @@ void haskellsecp256k1_v0_1_0_context_set_error_callback(haskellsecp256k1_v0_1_0_
     }
     ctx->error_callback.fn = fun;
     ctx->error_callback.data = data;
+}
+
+haskellsecp256k1_v0_1_0_scratch_space* haskellsecp256k1_v0_1_0_scratch_space_create(const haskellsecp256k1_v0_1_0_context* ctx, size_t max_size) {
+    VERIFY_CHECK(ctx != NULL);
+    return haskellsecp256k1_v0_1_0_scratch_create(&ctx->error_callback, max_size);
+}
+
+void haskellsecp256k1_v0_1_0_scratch_space_destroy(const haskellsecp256k1_v0_1_0_context *ctx, haskellsecp256k1_v0_1_0_scratch_space* scratch) {
+    VERIFY_CHECK(ctx != NULL);
+    haskellsecp256k1_v0_1_0_scratch_destroy(&ctx->error_callback, scratch);
 }
 
 /* Mark memory as no-longer-secret for the purpose of analysing constant-time behaviour

@@ -233,8 +233,11 @@ typedef int (*haskellsecp256k1_v0_1_0_nonce_function)(
  *
  *  It is highly recommended to call haskellsecp256k1_v0_1_0_selftest before using this context.
  */
+SECP256K1_API const haskellsecp256k1_v0_1_0_context *haskellsecp256k1_v0_1_0_context_static;
 
 /** Deprecated alias for haskellsecp256k1_v0_1_0_context_static. */
+SECP256K1_API const haskellsecp256k1_v0_1_0_context *haskellsecp256k1_v0_1_0_context_no_precomp
+SECP256K1_DEPRECATED("Use haskellsecp256k1_v0_1_0_context_static instead");
 
 /** Perform basic self tests (to be used in conjunction with haskellsecp256k1_v0_1_0_context_static)
  *
@@ -280,6 +283,10 @@ SECP256K1_API void haskellsecp256k1_v0_1_0_selftest(void);
  *  Do not create a new context object for each operation, as construction and
  *  randomization can take non-negligible time.
  */
+SECP256K1_API haskellsecp256k1_v0_1_0_context *haskellsecp256k1_v0_1_0_context_create(
+    unsigned int flags
+) SECP256K1_WARN_UNUSED_RESULT;
+
 /** Copy a secp256k1 context object (into dynamically allocated memory).
  *
  *  This function uses malloc to allocate memory. It is guaranteed that malloc is
@@ -292,6 +299,10 @@ SECP256K1_API void haskellsecp256k1_v0_1_0_selftest(void);
  *  Returns: pointer to a newly created context object.
  *  Args:    ctx: pointer to a context to copy (not haskellsecp256k1_v0_1_0_context_static).
  */
+SECP256K1_API haskellsecp256k1_v0_1_0_context *haskellsecp256k1_v0_1_0_context_clone(
+    const haskellsecp256k1_v0_1_0_context *ctx
+) SECP256K1_ARG_NONNULL(1) SECP256K1_WARN_UNUSED_RESULT;
+
 /** Destroy a secp256k1 context object (created in dynamically allocated memory).
  *
  *  The context pointer may not be used afterwards.
@@ -306,6 +317,10 @@ SECP256K1_API void haskellsecp256k1_v0_1_0_selftest(void);
  *               haskellsecp256k1_v0_1_0_context_create or haskellsecp256k1_v0_1_0_context_clone
  *               (i.e., not haskellsecp256k1_v0_1_0_context_static).
  */
+SECP256K1_API void haskellsecp256k1_v0_1_0_context_destroy(
+    haskellsecp256k1_v0_1_0_context *ctx
+) SECP256K1_ARG_NONNULL(1);
+
 /** Set a callback function to be called when an illegal argument is passed to
  *  an API call. It will only trigger for violations that are mentioned
  *  explicitly in the header.
@@ -384,12 +399,22 @@ SECP256K1_API void haskellsecp256k1_v0_1_0_context_set_error_callback(
  *  In:   size: amount of memory to be available as scratch space. Some extra
  *              (<100 bytes) will be allocated for extra accounting.
  */
+SECP256K1_API SECP256K1_WARN_UNUSED_RESULT haskellsecp256k1_v0_1_0_scratch_space *haskellsecp256k1_v0_1_0_scratch_space_create(
+    const haskellsecp256k1_v0_1_0_context *ctx,
+    size_t size
+) SECP256K1_ARG_NONNULL(1);
+
 /** Destroy a secp256k1 scratch space.
  *
  *  The pointer may not be used afterwards.
  *  Args:       ctx: pointer to a context object.
  *          scratch: space to destroy
  */
+SECP256K1_API void haskellsecp256k1_v0_1_0_scratch_space_destroy(
+    const haskellsecp256k1_v0_1_0_context *ctx,
+    haskellsecp256k1_v0_1_0_scratch_space *scratch
+) SECP256K1_ARG_NONNULL(1);
+
 /** Parse a variable-length public key into the pubkey object.
  *
  *  Returns: 1 if the public key was fully valid.
@@ -608,8 +633,10 @@ SECP256K1_API int haskellsecp256k1_v0_1_0_ecdsa_signature_normalize(
  * If a data pointer is passed, it is assumed to be a pointer to 32 bytes of
  * extra entropy.
  */
+SECP256K1_API const haskellsecp256k1_v0_1_0_nonce_function haskellsecp256k1_v0_1_0_nonce_function_rfc6979;
 
 /** A default safe nonce generation function (currently equal to haskellsecp256k1_v0_1_0_nonce_function_rfc6979). */
+SECP256K1_API const haskellsecp256k1_v0_1_0_nonce_function haskellsecp256k1_v0_1_0_nonce_function_default;
 
 /** Create an ECDSA signature.
  *

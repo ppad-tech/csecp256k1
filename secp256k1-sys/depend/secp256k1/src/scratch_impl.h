@@ -10,6 +10,31 @@
 #include "util.h"
 #include "scratch.h"
 
+static haskellsecp256k1_v0_1_0_scratch* haskellsecp256k1_v0_1_0_scratch_create(const haskellsecp256k1_v0_1_0_callback* error_callback, size_t size) {
+    const size_t base_alloc = ROUND_TO_ALIGN(sizeof(haskellsecp256k1_v0_1_0_scratch));
+    void *alloc = checked_malloc(error_callback, base_alloc + size);
+    haskellsecp256k1_v0_1_0_scratch* ret = (haskellsecp256k1_v0_1_0_scratch *)alloc;
+    if (ret != NULL) {
+        memset(ret, 0, sizeof(*ret));
+        memcpy(ret->magic, "scratch", 8);
+        ret->data = (void *) ((char *) alloc + base_alloc);
+        ret->max_size = size;
+    }
+    return ret;
+}
+
+static void haskellsecp256k1_v0_1_0_scratch_destroy(const haskellsecp256k1_v0_1_0_callback* error_callback, haskellsecp256k1_v0_1_0_scratch* scratch) {
+    if (scratch != NULL) {
+        if (haskellsecp256k1_v0_1_0_memcmp_var(scratch->magic, "scratch", 8) != 0) {
+            haskellsecp256k1_v0_1_0_callback_call(error_callback, "invalid scratch space");
+            return;
+        }
+        VERIFY_CHECK(scratch->alloc_size == 0); /* all checkpoints should be applied */
+        memset(scratch->magic, 0, sizeof(scratch->magic));
+        free(scratch);
+    }
+}
+
 static size_t haskellsecp256k1_v0_1_0_scratch_checkpoint(const haskellsecp256k1_v0_1_0_callback* error_callback, const haskellsecp256k1_v0_1_0_scratch* scratch) {
     if (haskellsecp256k1_v0_1_0_memcmp_var(scratch->magic, "scratch", 8) != 0) {
         haskellsecp256k1_v0_1_0_callback_call(error_callback, "invalid scratch space");
