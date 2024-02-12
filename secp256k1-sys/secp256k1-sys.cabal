@@ -20,7 +20,8 @@ library
   exposed-modules:
       Crypto.Secp256k1.Internal
   build-depends:
-      base ^>= 4.18.2.0
+      base
+    , bytestring
 
   include-dirs:
       depend/secp256k1/
@@ -35,7 +36,7 @@ library
     , depend/secp256k1/src/secp256k1.c
 
   cc-options:
-    -D "SECP256k1_API="
+    -D "SECP256K1_API="
     -D "ENABLE_MODULE_ECDH=1"
     -D "ENABLE_MODULE_SCHNORRSIG=1"
     -D "ENABLE_MODULE_EXTRAKEYS=1"
