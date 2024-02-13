@@ -7,9 +7,7 @@
 #include <string.h>
 
 #include "lax_der_parsing.h"
-extern int haskellsecp256k1_v0_1_0_ecdsa_signature_parse_compact(
-        const haskellsecp256k1_v0_1_0_context *ctx,
-        haskellsecp256k1_v0_1_0_ecdsa_signature *sig, const unsigned char *input64);
+
 int haskellsecp256k1_v0_1_0_ecdsa_signature_parse_der_lax(const haskellsecp256k1_v0_1_0_context* ctx, haskellsecp256k1_v0_1_0_ecdsa_signature* sig, const unsigned char *input, size_t inputlen) {
     size_t rpos, rlen, spos, slen;
     size_t pos = 0;

@@ -24,21 +24,17 @@ library
     , bytestring
 
   include-dirs:
-      depend/secp256k1/
-    , depend/secp256k1/include/
-    , depend/secp256k1/contrib/
-    , depend/secp256k1/src/
+      depend/secp256k1/include/
 
   c-sources:
-      depend/secp256k1/contrib/lax_der_parsing.c
-    , depend/secp256k1/src/precomputed_ecmult_gen.c
+      depend/secp256k1/src/precomputed_ecmult_gen.c
     , depend/secp256k1/src/precomputed_ecmult.c
     , depend/secp256k1/src/secp256k1.c
 
   cc-options:
-    -D "SECP256K1_API="
-    -D "ENABLE_MODULE_ECDH=1"
-    -D "ENABLE_MODULE_SCHNORRSIG=1"
-    -D "ENABLE_MODULE_EXTRAKEYS=1"
-    -D "ENABLE_MODULE_ELLSWIFT=1"
+    -DSECP256K1_API=
+    -DENABLE_MODULE_ECDH=1
+    -DENABLE_MODULE_SCHNORRSIG=1
+    -DENABLE_MODULE_EXTRAKEYS=1
+    -DENABLE_MODULE_ELLSWIFT=1
 

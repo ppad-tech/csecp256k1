@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-# adapted from rust-secp256k1/secp256k1-sys/vendor-libsecp.sh
+# NB adapted from rust-secp256k1/secp256k1-sys/vendor-libsecp.sh
 
 # Set default variables
 if [ -z "$SECP_VENDOR_GIT_ROOT" ]; then
@@ -54,7 +54,7 @@ echo
 # Check if we will do anything destructive.
 
 if [ "$FORCE" == "no" ]; then
-    if ! git diff --quiet -- "*.rs"; then
+    if ! git diff --quiet -- "*.hs"; then
         echo "ERROR: There appear to be modified source files. Check these in or pass -f (some source files will be modified to have symbols renamed)."
         exit 2
     fi
@@ -94,15 +94,9 @@ echo "$SOURCE_REV" >> ./secp256k1-HEAD-revision.txt
 
 # Patch source files
 
-# Remove all methods that use malloc.
-# To compensate, the secp_context_create and _destroy methods are redefined in Haskell.
-# patch "$DIR/include/secp256k1.h" "./secp256k1.h.patch"
-# patch "$DIR/src/secp256k1.c" "./secp256k1.c.patch"
-# patch "$DIR/src/scratch_impl.h" "./scratch_impl.h.patch"
-# patch "$DIR/src/util.h" "./util.h.patch"
+# XX patch out unused stuff that leads to duplicate object linking errors
 
-# Fix a linking error while cross-compiling to windowns with mingw
-patch "$DIR/contrib/lax_der_parsing.c" "./lax_der_parsing.c.patch"
+patch "$DIR/include/secp256k1.h" "./secp256k1.h.patch"
 
 # Prefix all methods with haskellsecp and a version prefix
 find "$DIR" \
@@ -123,10 +117,10 @@ cd "$SECP_SYS"
 # # Update the `links = ` in the manifest file.
 # sed -i -r "s/^links = \".*\"$/links = \"haskellsecp256k1_v${SECP_VENDOR_VERSION_CODE}\"/" Cargo.toml
 # # Update the extern references in the Haskell FFI source files.
-# find "./lib/" \
-#     -name "*.rs" \
-#     -type f \
-#     -print0 | xargs -0 sed -i -r "s/haskellsecp256k1_v[0-9]+_[0-9]+_[0-9]+_(.*)([\"\(])/haskellsecp256k1_v${SECP_VENDOR_VERSION_CODE}_\1\2/g"
-#
-# popd > /dev/null
+find "./lib/" \
+    -name "*.hs" \
+    -type f \
+    -print0 | xargs -0 sed -i -r "s/haskellsecp256k1_v[0-9]+_[0-9]+_[0-9]+_(.*)([\"\(])/haskellsecp256k1_v${SECP_VENDOR_VERSION_CODE}_\1\2/g"
+
+popd > /dev/null
 

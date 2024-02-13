@@ -233,11 +233,8 @@ typedef int (*haskellsecp256k1_v0_1_0_nonce_function)(
  *
  *  It is highly recommended to call haskellsecp256k1_v0_1_0_selftest before using this context.
  */
-SECP256K1_API const haskellsecp256k1_v0_1_0_context *haskellsecp256k1_v0_1_0_context_static;
 
 /** Deprecated alias for haskellsecp256k1_v0_1_0_context_static. */
-SECP256K1_API const haskellsecp256k1_v0_1_0_context *haskellsecp256k1_v0_1_0_context_no_precomp
-SECP256K1_DEPRECATED("Use haskellsecp256k1_v0_1_0_context_static instead");
 
 /** Perform basic self tests (to be used in conjunction with haskellsecp256k1_v0_1_0_context_static)
  *
@@ -633,10 +630,8 @@ SECP256K1_API int haskellsecp256k1_v0_1_0_ecdsa_signature_normalize(
  * If a data pointer is passed, it is assumed to be a pointer to 32 bytes of
  * extra entropy.
  */
-SECP256K1_API const haskellsecp256k1_v0_1_0_nonce_function haskellsecp256k1_v0_1_0_nonce_function_rfc6979;
 
 /** A default safe nonce generation function (currently equal to haskellsecp256k1_v0_1_0_nonce_function_rfc6979). */
-SECP256K1_API const haskellsecp256k1_v0_1_0_nonce_function haskellsecp256k1_v0_1_0_nonce_function_default;
 
 /** Create an ECDSA signature.
  *
