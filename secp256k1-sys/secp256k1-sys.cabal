@@ -23,6 +23,9 @@ library
       base
     , bytestring
 
+  ghc-options:
+    -optc -Wno-implicit-function-declaration
+
   include-dirs:
       depend/secp256k1/include/
 
@@ -31,10 +34,8 @@ library
     , depend/secp256k1/src/precomputed_ecmult.c
     , depend/secp256k1/src/secp256k1.c
 
-  cc-options:
-    -DSECP256K1_API=
-    -DENABLE_MODULE_ECDH=1
-    -DENABLE_MODULE_SCHNORRSIG=1
-    -DENABLE_MODULE_EXTRAKEYS=1
-    -DENABLE_MODULE_ELLSWIFT=1
+  cpp-options:
+    -DENABLE_MODULE_SCHNORRSIG
+    -DENABLE_MODULE_EXTRAKEYS
+    -DENABLE_MODULE_ELLSWIFT
 
