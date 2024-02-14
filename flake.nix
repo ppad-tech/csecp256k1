@@ -12,12 +12,14 @@
         pkgs  = nixpkgs.legacyPackages.${system};
         ghc   = pkgs.haskell.compiler.ghc964;
         cabal = pkgs.haskell.packages.ghc964.cabal-install;
+        hspec = pkgs.haskell.packages.ghc964.hspec;
       in
         {
           devShells.default = pkgs.mkShell {
             buildInputs = [
               ghc
               cabal
+              hspec
             ];
 
             shellHook = ''
