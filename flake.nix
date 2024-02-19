@@ -10,16 +10,12 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs  = nixpkgs.legacyPackages.${system};
-        hpkgs = pkgs.haskell.packages.ghc948;
+        hpkgs = pkgs.haskell.packages.ghc964;
         ghc   = hpkgs.ghc;
         cabal = hpkgs.cabal-install;
       in
         {
-          devShells.default = hpkgs.shellFor {
-            packages = p: [
-              p.hspec
-            ];
-
+          devShells.default = pkgs.mkShell {
             buildInputs = [
               cabal
             ];
