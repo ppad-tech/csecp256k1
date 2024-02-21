@@ -50,5 +50,9 @@ test-suite tests
 
   build-depends:
       base
+    , bytestring
+    , entropy
     , secp256k1-sys
+    , tasty
+    , tasty-hunit
 
