@@ -35,6 +35,7 @@ library
     , depend/secp256k1/src/secp256k1.c
 
   cpp-options:
+    -DENABLE_MODULE_ECDH
     -DENABLE_MODULE_SCHNORRSIG
     -DENABLE_MODULE_EXTRAKEYS
     -DENABLE_MODULE_ELLSWIFT

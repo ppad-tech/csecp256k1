@@ -34,6 +34,9 @@ _PUB_BYTES_UNCOMPRESSED = 65
 _PUB_BYTES_INTERNAL :: Int
 _PUB_BYTES_INTERNAL = 64
 
+_SEC_BYTES :: Int
+_SEC_BYTES = 32
+
 _SIG_BYTES :: Int
 _SIG_BYTES = 64
 
@@ -53,11 +56,13 @@ units = testGroup "unit tests" [
   , ec_pubkey_parse
   , ec_pubkey_serialize_compressed
   , ec_pubkey_serialize_uncompressed
+  , ec_pubkey_create
   , ecdsa_signature_parse_der
   , ecdsa_signature_serialize_der
   , ecdsa_sign
   , ecdsa_verify_compressed
   , ecdsa_verify_uncompressed
+  -- , ecdh_test
   ]
 
 wcontext :: (Ptr Context -> IO a) -> IO a
@@ -108,6 +113,13 @@ ec_pubkey_serialize_uncompressed =
       pub <- serialize_pubkey_uncompressed tex par
       assertEqual "success" pub _PUB_UNCOMPRESSED
 
+ec_pubkey_create :: TestTree
+ec_pubkey_create =
+  testCase "secp256k1_ec_pubkey_create (success)" $
+    wcontext $ \tex -> do
+      _ <- create_pubkey tex _SEC
+      assertBool "success" True
+
 -- ecdsa
 
 ecdsa_signature_parse_der :: TestTree
@@ -147,6 +159,17 @@ ecdsa_verify_uncompressed =
       suc <- verify_ecdsa tex _PUB_UNCOMPRESSED _HAS _DER
       assertBool "success" suc
 
+-- ecdh
+
+-- XX getting dyld error when trying to run
+--
+-- ecdh_test :: TestTree
+-- ecdh_test = testCase "secp256k1_ecdh (success)" $
+--   wcontext $ \tex -> do
+--     -- throws on failure, so any return implies success
+--     _ <- ecdh tex _PUB_COMPRESSED _SEC
+--     assertBool "success" True
+
 -- wrappers
 
 parse_der :: Ptr Context -> BS.ByteString -> IO BS.ByteString
@@ -157,15 +180,6 @@ parse_der tex bs =
       when (suc /= 1) $ throwIO Secp256k1Error
       let par = F.castPtr out
       BS.packCStringLen (par, _SIG_BYTES)
-
-parse_pubkey :: Ptr Context -> BS.ByteString -> IO BS.ByteString
-parse_pubkey tex bs =
-  BS.useAsCStringLen bs $ \(F.castPtr -> pub, fromIntegral -> len) ->
-    A.allocaBytes _PUB_BYTES_INTERNAL $ \out -> do
-      suc <- secp256k1_ec_pubkey_parse tex out pub len
-      when (suc /= 1) $ throwIO Secp256k1Error
-      let par = F.castPtr out
-      BS.packCStringLen (par, _PUB_BYTES_INTERNAL)
 
 serialize_der :: Ptr Context -> BS.ByteString -> IO BS.ByteString
 serialize_der tex bs = A.alloca $ \len ->
@@ -179,6 +193,24 @@ serialize_der tex bs = A.alloca $ \len ->
       let enc = F.castPtr out
           nel = fromIntegral pek
       BS.packCStringLen (enc, nel)
+
+parse_pubkey :: Ptr Context -> BS.ByteString -> IO BS.ByteString
+parse_pubkey tex bs =
+  BS.useAsCStringLen bs $ \(F.castPtr -> pub, fromIntegral -> len) ->
+    A.allocaBytes _PUB_BYTES_INTERNAL $ \out -> do
+      suc <- secp256k1_ec_pubkey_parse tex out pub len
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let par = F.castPtr out
+      BS.packCStringLen (par, _PUB_BYTES_INTERNAL)
+
+create_pubkey :: Ptr Context -> BS.ByteString -> IO BS.ByteString
+create_pubkey tex bs =
+  BS.useAsCString bs $ \(F.castPtr -> sec) ->
+    A.allocaBytes _PUB_BYTES_INTERNAL $ \out -> do
+      suc <- secp256k1_ec_pubkey_create tex out sec
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let pub = F.castPtr out
+      BS.packCStringLen (pub, _PUB_BYTES_INTERNAL)
 
 serialize_pubkey_compressed :: Ptr Context -> BS.ByteString -> IO BS.ByteString
 serialize_pubkey_compressed tex bs =
@@ -235,6 +267,19 @@ verify_ecdsa tex key msg der = do
       BS.useAsCString sig $ \(F.castPtr -> sip) ->
         secp256k1_ecdsa_verify tex sip has kep
   pure (suc == 1)
+
+-- XX resurrect when ecdh problems solved
+--
+-- ecdh :: Ptr Context -> BS.ByteString -> BS.ByteString -> IO BS.ByteString
+-- ecdh tex pub sec =
+--   A.allocaBytes _SEC_BYTES $ \out -> do
+--     par <- parse_pubkey tex pub
+--     BS.useAsCString par $ \(F.castPtr -> pab) ->
+--       BS.useAsCString sec $ \(F.castPtr -> sep) -> do
+--         suc <- secp256k1_ecdh tex out pab sep F.nullPtr F.nullPtr
+--         when (suc /= 1) $ throwIO Secp256k1Error
+--         let key = F.castPtr out
+--         BS.packCStringLen (key, _SEC_BYTES)
 
 -- test inputs
 
