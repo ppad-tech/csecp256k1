@@ -92,10 +92,6 @@ popd
 echo "# This file was automatically created by $(basename "$0")" > ./secp256k1-HEAD-revision.txt
 echo "$SOURCE_REV" >> ./secp256k1-HEAD-revision.txt
 
-# Patch out unused stuff that leads to duplicate object linking errors
-
-patch "$DIR/include/secp256k1.h" "./secp256k1.h.patch"
-
 # Prefix all methods with haskellsecp and a version prefix
 find "$DIR" \
     -not -path '*/\.*' \

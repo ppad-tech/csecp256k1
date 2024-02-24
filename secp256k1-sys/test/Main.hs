@@ -62,7 +62,7 @@ units = testGroup "unit tests" [
   , ecdsa_sign
   , ecdsa_verify_compressed
   , ecdsa_verify_uncompressed
-  -- , ecdh_test
+  , ecdh_test
   ]
 
 wcontext :: (Ptr Context -> IO a) -> IO a
@@ -161,14 +161,12 @@ ecdsa_verify_uncompressed =
 
 -- ecdh
 
--- XX getting dyld error when trying to run
---
--- ecdh_test :: TestTree
--- ecdh_test = testCase "secp256k1_ecdh (success)" $
---   wcontext $ \tex -> do
---     -- throws on failure, so any return implies success
---     _ <- ecdh tex _PUB_COMPRESSED _SEC
---     assertBool "success" True
+ecdh_test :: TestTree
+ecdh_test = testCase "secp256k1_ecdh (success)" $
+  wcontext $ \tex -> do
+    -- throws on failure, so any return implies success
+    _ <- ecdh tex _PUB_COMPRESSED _SEC
+    assertBool "success" True
 
 -- wrappers
 
