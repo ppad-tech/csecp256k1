@@ -38,7 +38,7 @@ library
     , depend/secp256k1/src/precomputed_ecmult.c
     , depend/secp256k1/src/secp256k1.c
 
-  cpp-options:
+  cc-options:
     -DENABLE_MODULE_ECDH
 
 test-suite tests
