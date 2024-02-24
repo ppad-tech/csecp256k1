@@ -26,6 +26,20 @@ module Crypto.Secp256k1.Internal (
 
   -- ecdh
   , secp256k1_ecdh
+
+  -- extrakeys
+  , KeyPair96
+  , XOnlyPublicKey64
+  , secp256k1_keypair_create
+  , secp256k1_keypair_sec
+  , secp256k1_keypair_pub
+  , secp256k1_xonly_pubkey_parse
+  , secp256k1_xonly_pubkey_serialize
+  , secp256k1_xonly_pubkey_from_pubkey
+
+  -- schnorr
+  , secp256k1_schnorrsig_sign32
+  , secp256k1_schnorrsig_verify
   ) where
 
 import Foreign.Ptr (Ptr)
@@ -152,7 +166,6 @@ foreign import capi
     -> Ptr Sig64
     -> IO CInt
 
-
 -- ecdh
 
 foreign import capi
@@ -166,103 +179,80 @@ foreign import capi
     -> Ptr b
     -> IO CInt
 
+-- extrakeys
+
+data KeyPair96
+
+data XOnlyPublicKey64
+
+foreign import capi
+  "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_keypair_create"
+  secp256k1_keypair_create
+    :: Ptr Context
+    -> Ptr KeyPair96
+    -> Ptr SecKey32
+    -> IO CInt
+
+foreign import capi
+  "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_keypair_pub"
+  secp256k1_keypair_pub
+    :: Ptr Context
+    -> Ptr PubKey64
+    -> Ptr KeyPair96
+    -> IO CInt
+
+foreign import capi
+  "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_keypair_sec"
+  secp256k1_keypair_sec
+    :: Ptr Context
+    -> Ptr SecKey32
+    -> Ptr KeyPair96
+    -> IO CInt
+
+foreign import capi
+  "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_xonly_pubkey_parse"
+  secp256k1_xonly_pubkey_parse
+    :: Ptr Context
+    -> Ptr XOnlyPublicKey64
+    -> Ptr CUChar
+    -> IO CInt
+
+foreign import capi
+  "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_xonly_pubkey_serialize"
+  secp256k1_xonly_pubkey_serialize
+    :: Ptr Context
+    -> Ptr CUChar
+    -> Ptr XOnlyPublicKey64
+    -> IO CInt
+
+foreign import capi
+  "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_xonly_pubkey_from_pubkey"
+  secp256k1_xonly_pubkey_from_pubkey
+    :: Ptr Context
+    -> Ptr XOnlyPublicKey64
+    -> Ptr CInt
+    -> Ptr PubKey64
+    -> IO CInt
+
 -- schnorr
 
--- foreign import capi
---   "secp256k1_schnorrsig.h haskellsecp256k1_v0_1_0_schnorrsig_sign32"
---   secp256k1_schnorrsig_sign32
---     :: Ptr Context
---     -> Ptr CUChar
---     -> Ptr CUChar
---     -> Ptr KeyPair
---     -> Ptr CUChar
---     -> IO CInt
+foreign import capi
+  "secp256k1_schnorrsig.h haskellsecp256k1_v0_1_0_schnorrsig_sign32"
+  secp256k1_schnorrsig_sign32
+    :: Ptr Context
+    -> Ptr Sig64
+    -> Ptr MsgHash32
+    -> Ptr KeyPair96
+    -> Ptr CUChar
+    -> IO CInt
 
--- foreign import capi
---   "secp256k1_schnorrsig.h haskellsecp256k1_v0_1_0_schnorrsig_verify"
---   secp256k1_schnorrsig_verify
---     :: Ptr Context
---     -> Ptr CUChar
---     -> Ptr CUChar
---     -> CSize
---     -> Ptr XOnlyPublicKey
---     -> IO CInt
---
--- -- foreign import capi
--- --   "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_keypair_create"
--- --   secp256k1_keypair_create
--- --     :: Ptr Context
--- --     -> Ptr KeyPair
--- --     -> Ptr CUChar
--- --     -> IO CInt
--- --
--- -- foreign import capi
--- --   "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_xonly_pubkey_parse"
--- --   secp256k1_xonly_pubkey_parse
--- --     :: Ptr Context
--- --     -> Ptr XOnlyPublicKey
--- --     -> Ptr CUChar
--- --     -> IO CInt
--- --
--- -- foreign import capi
--- --   "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_xonly_pubkey_serialize"
--- --   secp256k1_xonly_pubkey_serialize
--- --     :: Ptr Context
--- --     -> Ptr CUChar
--- --     -> Ptr XOnlyPublicKey
--- --     -> IO CInt
--- --
--- -- foreign import capi
--- --   "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_xonly_pubkey_from_pubkey"
--- --   secp256k1_xonly_pubkey_from_pubkey
--- --     :: Ptr Context
--- --     -> Ptr XOnlyPublicKey
--- --     -> Ptr CInt
--- --     -> Ptr PublicKey
--- --     -> IO CInt
--- --
--- -- foreign import capi
--- --   "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_xonly_pubkey_cmp"
--- --   secp256k1_xonly_pubkey_cmp
--- --     :: Ptr Context
--- --     -> Ptr XOnlyPublicKey
--- --     -> Ptr XOnlyPublicKey
--- --     -> IO CInt
--- --
--- -- foreign import capi
--- --   "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_xonly_pubkey_tweak_add"
--- --   secp256k1_xonly_pubkey_tweak_add
--- --     :: Ptr Context
--- --     -> Ptr PublicKey
--- --     -> Ptr XOnlyPublicKey
--- --     -> Ptr CUChar
--- --     -> IO CInt
--- --
--- -- foreign import capi
--- --   "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_keypair_xonly_pub"
--- --   secp256k1_keypair_xonly_pub
--- --     :: Ptr Context
--- --     -> Ptr XOnlyPublicKey
--- --     -> Ptr CInt
--- --     -> Ptr KeyPair
--- --     -> IO CInt
--- --
--- -- foreign import capi
--- --   "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_keypair_xonly_tweak_add"
--- --   secp256k1_keypair_xonly_tweak_add
--- --     :: Ptr Context
--- --     -> Ptr KeyPair
--- --     -> Ptr CUChar
--- --     -> IO CInt
--- --
--- -- foreign import capi
--- --   "secp256k1_extrakeys.h haskellsecp256k1_v0_1_0_xonly_pubkey_tweak_add_check"
--- --   secp256k1_xonly_pubkey_tweak_add_check
--- --     :: Ptr Context
--- --     -> Ptr CUChar
--- --     -> CInt
--- --     -> Ptr XOnlyPublicKey
--- --     -> Ptr CUChar
--- --     -> IO CInt
--- --
--- --
+foreign import capi
+  "secp256k1_schnorrsig.h haskellsecp256k1_v0_1_0_schnorrsig_verify"
+  secp256k1_schnorrsig_verify
+    :: Ptr Context
+    -> Ptr Sig64
+    -> Ptr CUChar
+    -> CSize
+    -> Ptr XOnlyPublicKey64
+    -> IO CInt
+

@@ -32,6 +32,8 @@ library
   includes:
       secp256k1.h
     , secp256k1_ecdh.h
+    , secp256k1_extrakeys.h
+    , secp256k1_schnorrsig.h
 
   c-sources:
       depend/secp256k1/src/precomputed_ecmult_gen.c
@@ -40,6 +42,8 @@ library
 
   cc-options:
     -DENABLE_MODULE_ECDH
+    -DENABLE_MODULE_EXTRAKEYS
+    -DENABLE_MODULE_SCHNORRSIG
 
 test-suite tests
   type:                exitcode-stdio-1.0

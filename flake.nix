@@ -1,5 +1,5 @@
 {
-  description = "haskell-secp256k1";
+  description = "csecp256k1";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";

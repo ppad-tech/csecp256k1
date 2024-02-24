@@ -25,6 +25,9 @@ instance Exception Secp256k1Error
 _DER_BYTES :: Int
 _DER_BYTES = 72
 
+_PUB_BYTES_XONLY :: Int
+_PUB_BYTES_XONLY = 32
+
 _PUB_BYTES_COMPRESSED :: Int
 _PUB_BYTES_COMPRESSED = 33
 
@@ -39,6 +42,9 @@ _SEC_BYTES = 32
 
 _SIG_BYTES :: Int
 _SIG_BYTES = 64
+
+_KEYPAIR_BYTES :: Int
+_KEYPAIR_BYTES = 96
 
 _COMPRESSED_FLAG :: CUInt
 _COMPRESSED_FLAG = 0x0102
@@ -63,6 +69,11 @@ units = testGroup "unit tests" [
   , ecdsa_verify_compressed
   , ecdsa_verify_uncompressed
   , ecdh_test
+  , xonly_pubkey_serialize_test
+  , xonly_pubkey_parse_test
+  , keypair_create_test
+  , schnorr_sign32
+  , schnorr_verify
   ]
 
 wcontext :: (Ptr Context -> IO a) -> IO a
@@ -167,6 +178,49 @@ ecdh_test = testCase "secp256k1_ecdh (success)" $
     -- throws on failure, so any return implies success
     _ <- ecdh tex _PUB_COMPRESSED _SEC
     assertBool "success" True
+
+-- extrakeys
+
+xonly_pubkey_serialize_test :: TestTree
+xonly_pubkey_serialize_test =
+  testCase "secp256k1_xonly_pubkey_serialize (success)" $ do
+    pux <- wcontext $ \tex -> do
+      key <- xonly_pubkey_from_pubkey tex _PUB_COMPRESSED
+      xonly_pubkey_serialize tex key
+    assertEqual "success" pux _PUB_XONLY
+
+xonly_pubkey_parse_test :: TestTree
+xonly_pubkey_parse_test =
+  testCase "secp256k1_xonly_pubkey_parse (success)" $ do
+    wcontext $ \tex -> do
+      pux <- xonly_pubkey_parse tex _PUB_XONLY
+      pub <- xonly_pubkey_serialize tex pux
+      assertEqual "success" pub _PUB_XONLY
+
+keypair_create_test :: TestTree
+keypair_create_test =
+  testCase "secp256k1_keypair_create (success)" $ do
+    wcontext $ \tex -> do
+      per <- keypair_create tex _SEC
+      sec <- keypair_sec tex per
+      pub <- keypair_pub tex per
+      ser <- serialize_pubkey_compressed tex pub
+      assertEqual "success" sec _SEC
+      assertEqual "success" ser _PUB_COMPRESSED
+
+-- schnorr
+
+schnorr_sign32 :: TestTree
+schnorr_sign32 = testCase "secp256k1_schnorrsig_sign32 (success)" $ do
+  wcontext $ \tex -> do
+    sig <- schnorrsig_sign32 tex _HAS _SEC
+    assertEqual "success" sig _SIG_SCHNORR
+
+schnorr_verify :: TestTree
+schnorr_verify = testCase "secp256k1_schnorrsig_verify (success)" $ do
+  wcontext $ \tex -> do
+    suc <- schnorrsig_verify tex _SIG_SCHNORR _HAS _PUB_COMPRESSED
+    assertBool "success" suc
 
 -- wrappers
 
@@ -277,9 +331,91 @@ ecdh tex pub sec =
         let key = F.castPtr out
         BS.packCStringLen (key, _SEC_BYTES)
 
+xonly_pubkey_from_pubkey :: Ptr Context -> BS.ByteString -> IO BS.ByteString
+xonly_pubkey_from_pubkey tex pub =
+  A.allocaBytes _PUB_BYTES_INTERNAL $ \out -> do
+    par <- parse_pubkey tex pub
+    BS.useAsCString par $ \(F.castPtr -> pab) -> do
+      -- returns 1 always
+      _ <- secp256k1_xonly_pubkey_from_pubkey tex out F.nullPtr pab
+      let key = F.castPtr out
+      BS.packCStringLen (key, _PUB_BYTES_INTERNAL)
+
+xonly_pubkey_serialize :: Ptr Context -> BS.ByteString -> IO BS.ByteString
+xonly_pubkey_serialize tex pux =
+  A.allocaBytes _PUB_BYTES_XONLY $ \out -> do
+    BS.useAsCString pux $ \(F.castPtr -> key) -> do
+      -- returns 1 always
+      _ <- secp256k1_xonly_pubkey_serialize tex out key
+      let kep = F.castPtr out
+      BS.packCStringLen (kep, _PUB_BYTES_XONLY)
+
+xonly_pubkey_parse :: Ptr Context -> BS.ByteString -> IO BS.ByteString
+xonly_pubkey_parse tex pub =
+  A.allocaBytes _PUB_BYTES_INTERNAL $ \out ->
+    BS.useAsCString pub $ \(F.castPtr -> pux) -> do
+      suc <- secp256k1_xonly_pubkey_parse tex out pux
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let key = F.castPtr out
+      BS.packCStringLen (key, _PUB_BYTES_INTERNAL)
+
+keypair_create :: Ptr Context -> BS.ByteString -> IO BS.ByteString
+keypair_create tex sec =
+  A.allocaBytes _KEYPAIR_BYTES $ \out ->
+    BS.useAsCString sec $ \(F.castPtr -> key) -> do
+      suc <- secp256k1_keypair_create tex out key
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let per = F.castPtr out
+      BS.packCStringLen (per, _KEYPAIR_BYTES)
+
+keypair_pub :: Ptr Context -> BS.ByteString -> IO BS.ByteString
+keypair_pub tex per =
+  A.allocaBytes _PUB_BYTES_INTERNAL $ \out ->
+    BS.useAsCString per $ \(F.castPtr -> par) -> do
+      _ <- secp256k1_keypair_pub tex out par
+      let enc = F.castPtr out
+      BS.packCStringLen (enc, _PUB_BYTES_INTERNAL)
+
+keypair_sec :: Ptr Context -> BS.ByteString -> IO BS.ByteString
+keypair_sec tex per =
+  A.allocaBytes _SEC_BYTES $ \out ->
+    BS.useAsCString per $ \(F.castPtr -> par) -> do
+      _ <- secp256k1_keypair_sec tex out par
+      let enc = F.castPtr out
+      BS.packCStringLen (enc, _SEC_BYTES)
+
+schnorrsig_sign32
+  :: Ptr Context
+  -> BS.ByteString
+  -> BS.ByteString
+  -> IO BS.ByteString
+schnorrsig_sign32 tex msg sec =
+  A.allocaBytes _SIG_BYTES $ \out ->
+    BS.useAsCString msg $ \(F.castPtr -> has) -> do
+      per <- keypair_create tex sec
+      BS.useAsCString per $ \(F.castPtr -> pur) -> do
+        suc <- secp256k1_schnorrsig_sign32 tex out has pur F.nullPtr
+        when (suc /= 1) $ throwIO Secp256k1Error
+        let enc = F.castPtr out
+        BS.packCStringLen (enc, _SIG_BYTES)
+
+schnorrsig_verify
+  :: Ptr Context
+  -> BS.ByteString
+  -> BS.ByteString
+  -> BS.ByteString
+  -> IO Bool
+schnorrsig_verify tex sig msg pub =
+  BS.useAsCString sig $ \(F.castPtr -> sip) ->
+    BS.useAsCStringLen msg $ \(F.castPtr -> has, fromIntegral -> len) -> do
+      pux <- xonly_pubkey_from_pubkey tex pub
+      BS.useAsCString pux $ \(F.castPtr -> pax) -> do
+        suc <- secp256k1_schnorrsig_verify tex sip has len pax
+        pure (suc == 1)
+
 -- test inputs
 
--- a DER-encoded signature
+-- DER-encoded signature
 _DER :: BS.ByteString
 _DER = mconcat [
     "0E\STX!\NUL\245\STX\191\160z\244>~\242ea\139\r\146\154v\EM\238\SOH\214"
@@ -314,5 +450,20 @@ _PUB_UNCOMPRESSED = mconcat [
     "\EOT\221\237B\ETX\218\201j~\133\242\195t\163|\227\233\201\161U\167"
   , "+d\180U\ESC\v\254w\157\212G\ENQ\DC2!=^\215\144R,\EOT-\238\142\133"
   , "\196\192\236_\150\128\vr\188Y@\200\188\FS^\DC1\228\252\191"
+  ]
+
+-- 32-byte x-only pubkey
+_PUB_XONLY :: BS.ByteString
+_PUB_XONLY = mconcat [
+    "\221\237B\ETX\218\201j~\133\242\195t\163|\227\233\201\161U\167+d"
+  , "\180U\ESC\v\254w\157\212G\ENQ"
+  ]
+
+-- 64-byte schnorr signature
+_SIG_SCHNORR :: BS.ByteString
+_SIG_SCHNORR  = mconcat [
+    "\214\185AtJ\189\250Gp\NAK2\221\DC2[\182\209\192j{\140^\222R\NUL~"
+  , "\139d@<\138\163rh\247\152\r\228\175\236\219\156\151\214~\135\&7"
+  , "\225\&6\234\220;\164R\191\170\186\243\NAK\147\f\144\156ez"
   ]
 
