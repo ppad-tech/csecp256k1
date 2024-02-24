@@ -268,18 +268,16 @@ verify_ecdsa tex key msg der = do
         secp256k1_ecdsa_verify tex sip has kep
   pure (suc == 1)
 
--- XX resurrect when ecdh problems solved
---
--- ecdh :: Ptr Context -> BS.ByteString -> BS.ByteString -> IO BS.ByteString
--- ecdh tex pub sec =
---   A.allocaBytes _SEC_BYTES $ \out -> do
---     par <- parse_pubkey tex pub
---     BS.useAsCString par $ \(F.castPtr -> pab) ->
---       BS.useAsCString sec $ \(F.castPtr -> sep) -> do
---         suc <- secp256k1_ecdh tex out pab sep F.nullPtr F.nullPtr
---         when (suc /= 1) $ throwIO Secp256k1Error
---         let key = F.castPtr out
---         BS.packCStringLen (key, _SEC_BYTES)
+ecdh :: Ptr Context -> BS.ByteString -> BS.ByteString -> IO BS.ByteString
+ecdh tex pub sec =
+  A.allocaBytes _SEC_BYTES $ \out -> do
+    par <- parse_pubkey tex pub
+    BS.useAsCString par $ \(F.castPtr -> pab) ->
+      BS.useAsCString sec $ \(F.castPtr -> sep) -> do
+        suc <- secp256k1_ecdh tex out pab sep F.nullPtr F.nullPtr
+        when (suc /= 1) $ throwIO Secp256k1Error
+        let key = F.castPtr out
+        BS.packCStringLen (key, _SEC_BYTES)
 
 -- test inputs
 

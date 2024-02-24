@@ -25,7 +25,7 @@ module Crypto.Secp256k1.Internal (
   , secp256k1_ecdsa_signature_serialize_der
 
   -- ecdh
-  -- , secp256k1_ecdh
+  , secp256k1_ecdh
   ) where
 
 import Foreign.Ptr (Ptr)
@@ -155,18 +155,16 @@ foreign import capi
 
 -- ecdh
 
--- XX seems fine, but GHC bails on call
---
--- foreign import capi
---   "secp256k1_ecdh.h haskellsecp256k1_v0_1_0_ecdh"
---   secp256k1_ecdh
---     :: Ptr Context
---     -> Ptr CUChar
---     -> Ptr PubKey64
---     -> Ptr SecKey32
---     -> Ptr a
---     -> Ptr b
---     -> IO CInt
+foreign import capi
+  "secp256k1_ecdh.h haskellsecp256k1_v0_1_0_ecdh"
+  secp256k1_ecdh
+    :: Ptr Context
+    -> Ptr CUChar
+    -> Ptr PubKey64
+    -> Ptr SecKey32
+    -> Ptr a
+    -> Ptr b
+    -> IO CInt
 
 -- schnorr
 
