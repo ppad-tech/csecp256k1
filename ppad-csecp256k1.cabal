@@ -1,5 +1,5 @@
 cabal-version:      3.0
-name:               csecp256k1
+name:               ppad-csecp256k1
 version:            0.1.0
 synopsis:           secp256k1 bindings
 description:        secp256k1 bindings.
