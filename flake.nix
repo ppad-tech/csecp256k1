@@ -10,13 +10,11 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         lib = "ppad-csecp256k1";
-        sys = "secp256k1-sys";
 
         config = {
           packageOverrides = super: let self = super.pkgs; in rec {
             haskell = super.haskell // {
               packageOverrides = self: super: {
-                ${sys} = super.callCabal2nix sys ./${sys} {};
                 ${lib} = super.callCabal2nix lib ./. {};
               };
             };
@@ -37,7 +35,7 @@
 
           devShells.default = hpkgs.shellFor {
             packages = p: [
-              p.${lib} p.${sys}
+              p.${lib}
             ];
 
             buildInputs = [
