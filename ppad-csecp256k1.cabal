@@ -22,7 +22,7 @@ library secp256k1-sys
     , bytestring
 
   ghc-options:
-      -Wall -optc -Wno-implicit-function-declaration
+      -Wall
 
   include-dirs:
       secp256k1-sys/depend/secp256k1/include/
