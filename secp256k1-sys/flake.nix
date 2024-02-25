@@ -29,7 +29,7 @@
         cabal = hpkgs.cabal-install;
       in
         {
-          packages.${lib} = hpkgs.callCabal2nix lib self rec { };
+          packages.${lib} = hpkgs.${lib};
 
           defaultPackage = self.packages.${system}.${lib};
 
