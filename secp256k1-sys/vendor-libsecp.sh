@@ -2,6 +2,8 @@
 set -e
 
 # NB adapted from rust-secp256k1/secp256k1-sys/vendor-libsecp.sh
+#
+# https://github.com/rust-bitcoin/rust-secp256k1
 
 # Set default variables
 if [ -z "$SECP_VENDOR_GIT_ROOT" ]; then
@@ -105,12 +107,8 @@ find "$DIR" \
     -print0 | xargs -0 sed -i "/^#include/! s/ecdsa_signature_parse_der_lax/haskellsecp256k1_v${SECP_VENDOR_VERSION_CODE}_ecdsa_signature_parse_der_lax/g"
 
 cd "$SECP_SYS"
-#
-# XX jtobin: handle this appropriately for haskell below
-#
-# # Update the `links = ` in the manifest file.
-# sed -i -r "s/^links = \".*\"$/links = \"haskellsecp256k1_v${SECP_VENDOR_VERSION_CODE}\"/" Cargo.toml
-# # Update the extern references in the Haskell FFI source files.
+
+# Update the extern references in the Haskell FFI source files.
 find "./lib/" \
     -name "*.hs" \
     -type f \

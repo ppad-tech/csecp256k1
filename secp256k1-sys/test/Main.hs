@@ -76,6 +76,8 @@ units = testGroup "unit tests" [
   , schnorr_verify
   ]
 
+-- context
+
 wcontext :: (Ptr Context -> IO a) -> IO a
 wcontext =
   bracket
@@ -86,8 +88,6 @@ wentropy :: (Ptr Seed32 -> IO a) -> IO a
 wentropy c = do
   bs <- E.getEntropy 32
   BS.useAsCString bs $ \(F.castPtr -> b) -> c b
-
--- context
 
 context_create :: TestTree
 context_create = testCase "secp256k1_context_create (non-null)" $
