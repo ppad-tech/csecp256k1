@@ -1,8 +1,20 @@
 {-# LANGUAGE CApiFFI #-}
 
 module Crypto.Secp256k1.Internal (
+  -- constants
+    _DER_BYTES
+  , _PUB_BYTES_INTERNAL
+  , _PUB_BYTES_COMPRESSED
+  , _PUB_BYTES_UNCOMPRESSED
+  , _PUB_BYTES_XONLY
+  , _SEC_BYTES
+  , _SIG_BYTES
+  , _KEYPAIR_BYTES
+  , _COMPRESSED_FLAG
+  , _UNCOMPRESSED_FLAG
+
   -- context
-    _SECP256K1_CONTEXT_NONE
+  , _SECP256K1_CONTEXT_NONE
   , Context
   , Seed32
   , secp256k1_context_create
@@ -44,6 +56,48 @@ module Crypto.Secp256k1.Internal (
 
 import Foreign.Ptr (Ptr)
 import Foreign.C.Types (CUChar(..), CInt(..), CUInt(..), CSize(..))
+
+-- size constants
+
+-- bytesize of a DER-encoded signature
+_DER_BYTES :: Int
+_DER_BYTES = 72
+
+-- bytesize of an x-only pubkey
+_PUB_BYTES_XONLY :: Int
+_PUB_BYTES_XONLY = 32
+
+-- bytesize of a compressed pubkey
+_PUB_BYTES_COMPRESSED :: Int
+_PUB_BYTES_COMPRESSED = 33
+
+-- bytesize of an uncompressed pubkey
+_PUB_BYTES_UNCOMPRESSED :: Int
+_PUB_BYTES_UNCOMPRESSED = 65
+
+-- bytesize of a secp256k1-internal pubkey
+_PUB_BYTES_INTERNAL :: Int
+_PUB_BYTES_INTERNAL = 64
+
+-- bytesize of a secret key
+_SEC_BYTES :: Int
+_SEC_BYTES = 32
+
+-- bytesize of a secp256k1-internal signature
+_SIG_BYTES :: Int
+_SIG_BYTES = 64
+
+-- bytesize of a secp256k1-internal keypair
+_KEYPAIR_BYTES :: Int
+_KEYPAIR_BYTES = 96
+
+-- flag to indicate a compressed pubkey when parsing
+_COMPRESSED_FLAG :: CUInt
+_COMPRESSED_FLAG = 0x0102
+
+-- flag to indicate an uncompressed pubkey when parsing
+_UNCOMPRESSED_FLAG :: CUInt
+_UNCOMPRESSED_FLAG = 0x0002
 
 -- context
 

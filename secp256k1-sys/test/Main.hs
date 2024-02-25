@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE ViewPatterns  #-}
 
 module Main where
@@ -8,7 +7,6 @@ import Control.Monad (when)
 import Control.Exception (Exception, bracket, throwIO)
 import Crypto.Secp256k1.Internal
 import qualified Data.ByteString as BS
-import Foreign.C.Types (CUInt)
 import Foreign.Ptr (Ptr)
 import qualified Foreign.Ptr as F (nullPtr, castPtr)
 import qualified Foreign.Marshal.Alloc as A (alloca, allocaBytes)
@@ -21,36 +19,6 @@ data Secp256k1Error = Secp256k1Error
   deriving Show
 
 instance Exception Secp256k1Error
-
-_DER_BYTES :: Int
-_DER_BYTES = 72
-
-_PUB_BYTES_XONLY :: Int
-_PUB_BYTES_XONLY = 32
-
-_PUB_BYTES_COMPRESSED :: Int
-_PUB_BYTES_COMPRESSED = 33
-
-_PUB_BYTES_UNCOMPRESSED :: Int
-_PUB_BYTES_UNCOMPRESSED = 65
-
-_PUB_BYTES_INTERNAL :: Int
-_PUB_BYTES_INTERNAL = 64
-
-_SEC_BYTES :: Int
-_SEC_BYTES = 32
-
-_SIG_BYTES :: Int
-_SIG_BYTES = 64
-
-_KEYPAIR_BYTES :: Int
-_KEYPAIR_BYTES = 96
-
-_COMPRESSED_FLAG :: CUInt
-_COMPRESSED_FLAG = 0x0102
-
-_UNCOMPRESSED_FLAG :: CUInt
-_UNCOMPRESSED_FLAG = 0x0002
 
 main :: IO ()
 main = defaultMain units
