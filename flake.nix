@@ -15,7 +15,7 @@
         hlib = pkgs.haskell.lib;
 
         hpkgs = pkgs.haskell.packages.ghc964.override {
-          overrides = new: old: rec {
+          overrides = new: old: {
             ${lib} = old.callCabal2nix lib ./. {};
           };
         };
@@ -25,6 +25,8 @@
         cabal = hpkgs.cabal-install;
       in
         {
+          # cabal2nix disables haddock for packages with internal
+          # dependencies like secp256k1-sys, so enable it manually
           packages.${lib} = hlib.doHaddock hpkgs.${lib};
 
           defaultPackage = self.packages.${system}.${lib};
