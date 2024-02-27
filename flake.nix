@@ -11,18 +11,14 @@
       let
         lib = "ppad-csecp256k1";
 
-        config = {
-          packageOverrides = super: let self = super.pkgs; in rec {
-            haskell = super.haskell // {
-              packageOverrides = self: super: {
-                ${lib} = super.callCabal2nix lib ./. {};
-              };
-            };
+        pkgs = import nixpkgs { inherit system; };
+        hlib = pkgs.haskell.lib;
+
+        hpkgs = pkgs.haskell.packages.ghc964.override {
+          overrides = new: old: rec {
+            ${lib} = old.callCabal2nix lib ./. {};
           };
         };
-
-        pkgs  = import nixpkgs { inherit system; inherit config; };
-        hpkgs = pkgs.haskell.packages.ghc964;
 
         cc    = pkgs.stdenv.cc;
         ghc   = hpkgs.ghc;
