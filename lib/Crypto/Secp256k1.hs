@@ -10,9 +10,8 @@
 -- Stability: stable
 -- Portability: portable
 --
--- Bindings to bitcoin-core/secp256k1, which "provides digital
--- signatures and other cryptographic primitives on the secp256k1
--- elliptic curve."
+-- Bindings to bitcoin-core/secp256k1, which provides digital signatures
+-- and other cryptographic primitives on the secp256k1 elliptic curve.
 --
 -- This library exposes a minimal subset of functionality, primarily
 -- supporting ECDSA/Schnorr signatures and ECDH secret computation.
@@ -105,7 +104,7 @@ newtype XOnlyPub = XOnlyPub BS.ByteString
 instance Show XOnlyPub where
   show _ = "<bitcoin-core/secp256k1 x-only public key>"
 
--- | A bitcoin-core/secp256k1-internal public/secret keypair.
+-- | A bitcoin-core/secp256k1-internal keypair.
 --
 --   Create a value of this type by passing a secret key to
 --   'create_keypair'.
