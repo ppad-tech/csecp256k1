@@ -162,6 +162,9 @@ wcontext = bracket create destroy where
 --   context with the provided entropy before executing the supplied
 --   continuation.
 --
+--   Use this function to execute computations that may benefit from
+--   additional side-channel attack protection.
+--
 --   You must supply at least 32 bytes of entropy; any less will result
 --   in an InsufficientEntropy exception.
 --
