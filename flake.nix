@@ -25,7 +25,7 @@
         cabal = hpkgs.cabal-install;
       in
         {
-          packages.${lib} = hpkgs.${lib};
+          packages.${lib} = hlib.doHaddock hpkgs.${lib};
 
           defaultPackage = self.packages.${system}.${lib};
 
