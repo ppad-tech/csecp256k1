@@ -13,7 +13,7 @@ description:
   Bindings to bitcoin-core/secp256k1, which provides digital
   signatures and other cryptographic primitives on the secp256k1
   elliptic curve.
-  .
+
   This library exposes a minimal subset of functionality, primarily
   supporting ECDSA/Schnorr signatures and ECDH secret computation.
 

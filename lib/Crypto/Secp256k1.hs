@@ -5,57 +5,45 @@
 -- Module: Crypto.Secp256k1
 -- Copyright: (c) 2024 Jared Tobin
 -- License: MIT
---
 -- Maintainer: Jared Tobin <jared@ppad.tech>
--- Stability: stable
--- Portability: portable
 --
--- Bindings to bitcoin-core/secp256k1, which provides digital signatures
--- and other cryptographic primitives on the secp256k1 elliptic curve.
+-- Bindings to bitcoin-core/secp256k1, a C library supporting digital
+-- signatures and other cryptographic primitives on the secp256k1
+-- elliptic curve.
 --
 -- This library exposes a minimal subset of functionality, primarily
 -- supporting ECDSA/Schnorr signatures and ECDH secret computation.
 
 module Crypto.Secp256k1 (
-    -- exceptions
-    Secp256k1Exception(..)
-
-    -- context
-  , Context
+    Context
   , wcontext
   , wrcontext
 
-    -- ec
+  , Sig
+  , sign
+  , sign_schnorr
+  , verify
+  , verify_schnorr
+  , ecdh
+
+  , parse_der
+  , serialize_der
+
   , Pub
   , derive_pub
   , parse_pub
   , serialize_pub
   , serialize_pub_u
-
-    -- ecdsa
-  , Sig
-  , sign
-  , verify
-  , parse_der
-  , serialize_der
-
-    -- ecdh
-  , ecdh
-
-    -- extrakeys
   , XOnlyPub
   , xonly
   , parse_xonly
   , serialize_xonly
-
   , KeyPair
   , create_keypair
   , keypair_pub
   , keypair_sec
 
-    -- schnorr
-  , sign_schnorr
-  , verify_schnorr
+  , Secp256k1Exception(..)
   ) where
 
 import Control.Exception (Exception, bracket, throwIO)
