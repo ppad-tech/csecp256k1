@@ -115,7 +115,7 @@ instance Show Sig where
 -- | A catch-all exception type.
 --
 --   Internal library errors (i.e., non-unit return values in the
---   underlying C functions) will typically throw a Secp256k1Error
+--   underlying C functions) will typically throw a 'Secp256k1Error'
 --   exception.
 data Secp256k1Exception =
     Secp256k1Error
@@ -136,7 +136,9 @@ instance Exception Secp256k1Exception
 --
 --   >>> wcontext $ \tex -> parse_pub tex bytestring
 --   "<bitcoin-core/secp256k1 public key>"
-wcontext :: (Context -> IO a) -> IO a
+wcontext
+  :: (Context -> IO a) -- ^ continuation to run in the context
+  -> IO a
 wcontext = bracket create destroy where
   create = do
     tex <- secp256k1_context_create _SECP256K1_CONTEXT_NONE
@@ -153,11 +155,14 @@ wcontext = bracket create destroy where
 --   additional side-channel attack protection.
 --
 --   You must supply at least 32 bytes of entropy; any less will result
---   in an InsufficientEntropy exception.
+--   in an 'InsufficientEntropy' exception.
 --
 --   >>> wrcontext entropy $ \tex -> sign tex sec msg
 --   "<bitcoin-core/secp256k1 signature>"
-wrcontext :: BS.ByteString -> (Context -> IO a) -> IO a
+wrcontext
+  :: BS.ByteString     -- ^ 32 bytes of fresh entropy
+  -> (Context -> IO a) -- ^ continuation to run in the context
+  -> IO a
 wrcontext enn con
     | BS.length enn < 32 = throwIO InsufficientEntropy
     | otherwise = bracket create destroy con
@@ -180,7 +185,10 @@ wrcontext enn con
 --
 --   >>> wrcontext entropy $ \tex -> derive_pub tex sec
 --   "<bitcoin-core/secp256k1 public key>"
-derive_pub :: Context -> BS.ByteString -> IO Pub
+derive_pub
+  :: Context
+  -> BS.ByteString -- ^ 32-byte secret key
+  -> IO Pub
 derive_pub (Context tex) bs =
   BS.useAsCString bs $ \(F.castPtr -> sec) ->
     A.allocaBytes _PUB_BYTES_INTERNAL $ \out -> do
@@ -196,7 +204,10 @@ derive_pub (Context tex) bs =
 --
 --   >>> wcontext $ \tex -> parse_pub tex bs
 --   "<bitcoin-core/secp256k1 public key>"
-parse_pub :: Context -> BS.ByteString -> IO Pub
+parse_pub
+  :: Context
+  -> BS.ByteString -- ^ compressed or uncompressed public key
+  -> IO Pub
 parse_pub (Context tex) bs =
   BS.useAsCStringLen bs $ \(F.castPtr -> pub, fromIntegral -> len) ->
     A.allocaBytes _PUB_BYTES_INTERNAL $ \out -> do
@@ -214,14 +225,20 @@ data PubFormat =
 --   representation.
 --
 --   >>> wcontext $ \tex -> serialize_pub tex pub
-serialize_pub :: Context -> Pub -> IO BS.ByteString
+serialize_pub
+  :: Context
+  -> Pub
+  -> IO BS.ByteString -- ^ serialized compressed public key
 serialize_pub = serialize_pub_in Compressed
 
 -- | Serialize a public key into an uncompressed (65-byte) bytestring
 --   represention.
 --
 --   >>> wcontext $ \tex -> serialize_pub_u tex pub
-serialize_pub_u :: Context -> Pub -> IO BS.ByteString
+serialize_pub_u
+  :: Context
+  -> Pub
+  -> IO BS.ByteString -- ^ serialized uncompressed public key
 serialize_pub_u = serialize_pub_in Uncompressed
 
 serialize_pub_in :: PubFormat -> Context -> Pub -> IO BS.ByteString
@@ -254,7 +271,11 @@ serialize_pub_in for (Context tex) (Pub pub) =
 --
 --   >>> wrcontext entropy $ \tex -> sign tex sec msg
 --   "<bitcoin-core/secp256k1 signature>"
-sign :: Context -> BS.ByteString -> BS.ByteString -> IO Sig
+sign
+  :: Context
+  -> BS.ByteString -- ^ 32-byte secret key
+  -> BS.ByteString -- ^ 32-byte message hash
+  -> IO Sig
 sign (Context tex) key msg =
   A.allocaBytes _SIG_BYTES $ \out ->
     BS.useAsCString msg $ \(F.castPtr -> has) ->
@@ -276,7 +297,12 @@ sign (Context tex) key msg =
 --   True
 --   >>> wcontext $ \tex -> verify tex pub msg bad_sig
 --   False
-verify :: Context -> Pub -> BS.ByteString -> Sig -> IO Bool
+verify
+  :: Context
+  -> Pub
+  -> BS.ByteString -- ^ 32-byte message hash
+  -> Sig
+  -> IO Bool
 verify (Context tex) (Pub pub) msg (Sig sig) =
   BS.useAsCString pub $ \(F.castPtr -> key) ->
     BS.useAsCString sig $ \(F.castPtr -> sip) ->
@@ -290,7 +316,10 @@ verify (Context tex) (Pub pub) msg (Sig sig) =
 --   "<bitcoin-core/secp256k1 signature>"
 --   >>> wcontext $ \tex -> parse_der tex bad_bytestring
 --   *** Exception: Secp256k1Error
-parse_der :: Context -> BS.ByteString -> IO Sig
+parse_der
+  :: Context
+  -> BS.ByteString -- ^ DER-encoded signature
+  -> IO Sig
 parse_der (Context tex) bs =
   BS.useAsCStringLen bs $ \(F.castPtr -> der, fromIntegral -> len) ->
     A.allocaBytes _SIG_BYTES $ \out -> do
@@ -303,7 +332,10 @@ parse_der (Context tex) bs =
 -- | Serialize a signature into a DER-encoded bytestring.
 --
 --   >>> wcontext $ \tex -> serialize_der tex sig
-serialize_der :: Context -> Sig  -> IO BS.ByteString
+serialize_der
+  :: Context
+  -> Sig
+  -> IO BS.ByteString -- ^ DER-encoded signature
 serialize_der (Context tex) (Sig sig) =
   A.alloca $ \len ->
     A.allocaBytes _DER_BYTES $ \out ->
@@ -341,7 +373,10 @@ xonly (Context tex) (Pub pub) =
 --
 --   >>> wcontext $ \tex -> parse_xonly tex bytestring
 --   "<bitcoin-core/secp256k1 x-only public key>"
-parse_xonly :: Context -> BS.ByteString -> IO XOnlyPub
+parse_xonly
+  :: Context
+  -> BS.ByteString -- ^ compressed or uncompressed public key
+  -> IO XOnlyPub
 parse_xonly (Context tex) bs =
   A.allocaBytes _PUB_BYTES_INTERNAL $ \out ->
     BS.useAsCString bs $ \(F.castPtr -> pub) -> do
@@ -355,7 +390,10 @@ parse_xonly (Context tex) bs =
 --   representation.
 --
 --   >>> wcontext $ \tex -> serialize_xonly tex xonly
-serialize_xonly :: Context -> XOnlyPub -> IO BS.ByteString
+serialize_xonly
+  :: Context
+  -> XOnlyPub
+  -> IO BS.ByteString -- ^ serialized x-only public key
 serialize_xonly (Context tex) (XOnlyPub pux) =
   A.allocaBytes _PUB_BYTES_XONLY $ \out -> do
     BS.useAsCString pux $ \(F.castPtr -> pub) -> do
@@ -370,7 +408,10 @@ serialize_xonly (Context tex) (XOnlyPub pux) =
 --
 --   >>> wrcontext entropy $ \tex -> create_keypair tex sec
 --   "<bitcoin-core/secp256k1 keypair>"
-create_keypair :: Context -> BS.ByteString -> IO KeyPair
+create_keypair
+  :: Context
+  -> BS.ByteString -- ^ 32-byte secret key
+  -> IO KeyPair
 create_keypair (Context tex) sec =
   A.allocaBytes _KEYPAIR_BYTES $ \out ->
     BS.useAsCString sec $ \(F.castPtr -> key) -> do
@@ -397,7 +438,10 @@ keypair_pub (Context tex) (KeyPair per) =
 -- | Extract a secret key from a keypair.
 --
 --   >>> wrcontext entropy $ \tex -> keypair_sec tex keypair
-keypair_sec :: Context -> KeyPair -> IO BS.ByteString
+keypair_sec
+  :: Context
+  -> KeyPair
+  -> IO BS.ByteString -- ^ 32-byte secret key
 keypair_sec (Context tex) (KeyPair per) =
   A.allocaBytes _SEC_BYTES $ \out ->
     BS.useAsCString per $ \(F.castPtr -> par) -> do
@@ -407,13 +451,17 @@ keypair_sec (Context tex) (KeyPair per) =
 
 -- ecdh
 
--- | Compute an ECDH secret from the provided public and (32-byte)
---   secret key.
+-- | Compute an ECDH secret key from the provided public key and
+--   (32-byte) secret key.
 --
 --   The size of the input is not checked.
 --
 --   >>> wrcontext entropy $ \tex -> ecdh tex pub sec
-ecdh :: Context -> Pub -> BS.ByteString -> IO BS.ByteString
+ecdh
+  :: Context
+  -> Pub
+  -> BS.ByteString    -- ^ 32-byte secret key
+  -> IO BS.ByteString -- ^ 32-byte secret key
 ecdh (Context tex) (Pub pub) sec =
   A.allocaBytes _SEC_BYTES $ \out ->
     BS.useAsCString pub $ \(F.castPtr -> pup) ->
@@ -438,7 +486,11 @@ ecdh (Context tex) (Pub pub) sec =
 --   The sizes of the inputs are not checked.
 --
 --   >>> wrcontext entropy $ \tex -> sign_schnorr tex msg sec
-sign_schnorr :: Context -> BS.ByteString -> BS.ByteString -> IO BS.ByteString
+sign_schnorr
+  :: Context
+  -> BS.ByteString    -- ^ 32-byte message hash
+  -> BS.ByteString    -- ^ 32-byte secret key
+  -> IO BS.ByteString -- ^ 64-byte signature
 sign_schnorr c@(Context tex) msg sec =
   A.allocaBytes _SIG_BYTES $ \out ->
     BS.useAsCString msg $ \(F.castPtr -> has) -> do
@@ -455,7 +507,12 @@ sign_schnorr c@(Context tex) msg sec =
 --   The sizes of the inputs are not checked.
 --
 --   >>> wrcontext entropy $ \tex -> verify_schnorr tex pub msg sig
-verify_schnorr :: Context -> Pub -> BS.ByteString -> BS.ByteString -> IO Bool
+verify_schnorr
+  :: Context
+  -> Pub
+  -> BS.ByteString -- ^ 32-byte message hash
+  -> BS.ByteString -- ^ 64-byte signature
+  -> IO Bool
 verify_schnorr c@(Context tex) pub msg sig =
   BS.useAsCString sig $ \(F.castPtr -> sip) ->
     BS.useAsCStringLen msg $ \(F.castPtr -> has, fromIntegral -> len) -> do

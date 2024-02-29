@@ -21,7 +21,7 @@ development shell with:
 $ nix develop
 ```
 
-Then you can do e.g.:
+Then do e.g.:
 
 ```
 $ cabal repl ppad-csecp256k1
