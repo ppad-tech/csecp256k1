@@ -427,9 +427,12 @@ serialize_der (Context tex) (Sig sig) =
             nel = fromIntegral pek
         BS.packCStringLen (der, nel)
 
+-- | Parse a bytestring encoding a compact (64-byte) signature.
+--
+--   >>> wcontext $ \tex -> parse_compact tex bytestring
 parse_compact
   :: Context
-  -> BS.ByteString -- ^ 64-byte compact signature
+  -> BS.ByteString -- ^ bytestring encoding a 64-byte compact signature
   -> IO Sig
 parse_compact (Context tex) bs =
   BS.useAsCString bs $ \(F.castPtr -> com) ->
@@ -440,6 +443,9 @@ parse_compact (Context tex) bs =
       enc <- BS.packCStringLen (par, _SIG_BYTES)
       pure (Sig enc)
 
+-- | Serialize a signature into a compact (64-byte) bytestring.
+--
+--   >>> wcontext $ \tex -> serialize_compact tex sig
 serialize_compact
   :: Context
   -> Sig
