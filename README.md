@@ -48,6 +48,14 @@ which strict constant-timeness can be challenging to achieve.
 If you discover any vulnerabilities, please disclose them via
 security@ppad.tech.
 
+## Attribution
+
+This implementation has benefited greatly and uses modified versions of
+code from both [secp256k1-haskell][hsecp] (test cases, FFI/bytestring
+manipulation) and [rust-secp256k1][rsecp] (dependency vendoring).
+
 [nixos]: https://nixos.org/
 [flake]: https://nixos.org/manual/nix/unstable/command-ref/new-cli/nix3-flake.html
 [hadoc]: https://docs.ppad.tech/csecp256k1
+[hsecp]: https://github.com/haskoin/secp256k1-haskell
+[rsecp]: https://github.com/rust-bitcoin/rust-secp256k1
