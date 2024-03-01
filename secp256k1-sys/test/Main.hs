@@ -31,8 +31,13 @@ units = testGroup "unit tests" [
   , ec_pubkey_serialize_compressed
   , ec_pubkey_serialize_uncompressed
   , ec_pubkey_create
+  , ec_pubkey_tweak_add
+  , ec_pubkey_tweak_mul
+  , ec_seckey_tweak_add
+  , ec_seckey_tweak_mul
   , ecdsa_signature_parse_der
   , ecdsa_signature_serialize_der
+  , ecdsa_signature_compact
   , ecdsa_sign
   , ecdsa_verify_compressed
   , ecdsa_verify_uncompressed
@@ -99,6 +104,38 @@ ec_pubkey_create =
       _ <- create_pubkey tex _SEC
       assertBool "success" True
 
+ec_pubkey_tweak_add :: TestTree
+ec_pubkey_tweak_add =
+  testCase "secp256k1_ec_pubkey_tweak_add (success)" $
+    wcontext $ \tex -> do
+      pub <- parse_pubkey tex _PUB_COMPRESSED
+      add <- tweak_pub_add tex pub _TWEAK
+      eek <- serialize_pubkey_uncompressed tex add
+      assertEqual "success" eek _PUB_ADD_TWEAKED
+
+ec_pubkey_tweak_mul :: TestTree
+ec_pubkey_tweak_mul =
+  testCase "secp256k1_ec_pubkey_tweak_mul (success)" $
+    wcontext $ \tex -> do
+      pub <- parse_pubkey tex _PUB_COMPRESSED
+      mul <- tweak_pub_mul tex pub _TWEAK
+      eek <- serialize_pubkey_uncompressed tex mul
+      assertEqual "success" eek _PUB_MUL_TWEAKED
+
+ec_seckey_tweak_add :: TestTree
+ec_seckey_tweak_add =
+  testCase "secp256k1_ec_seckey_tweak_add (success)" $
+    wcontext $ \tex -> do
+      eek <- tweak_sec_add tex _SEC _TWEAK
+      assertEqual "success" eek _SEC_ADD_TWEAKED
+
+ec_seckey_tweak_mul :: TestTree
+ec_seckey_tweak_mul =
+  testCase "secp256k1_ec_seckey_tweak_mul (success)" $
+    wcontext $ \tex -> do
+      eek <- tweak_sec_mul tex _SEC _TWEAK
+      assertEqual "success" eek _SEC_MUL_TWEAKED
+
 -- ecdsa
 
 ecdsa_signature_parse_der :: TestTree
@@ -114,6 +151,17 @@ ecdsa_signature_serialize_der =
   testCase "secp256k1_ecdsa_signature_serialize_der (success)" $
     wcontext $ \tex -> do
       par <- parse_der tex _DER
+      der <- serialize_der tex par
+      assertEqual "success" der _DER
+
+-- joint parse, serialize test
+ecdsa_signature_compact :: TestTree
+ecdsa_signature_compact =
+  testCase "secp256k1_ecdsa_signature_{parse, serialize}_compact (success)" $
+    wcontext $ \tex -> do
+      sig <- parse_der tex _DER
+      com <- serialize_compact tex sig
+      par <- parse_compact tex com
       der <- serialize_der tex par
       assertEqual "success" der _DER
 
@@ -214,6 +262,24 @@ serialize_der tex bs = A.alloca $ \len ->
           nel = fromIntegral pek
       BS.packCStringLen (enc, nel)
 
+parse_compact :: Ptr Context -> BS.ByteString -> IO BS.ByteString
+parse_compact tex bs =
+  BS.useAsCString bs $ \(F.castPtr -> com) ->
+    A.allocaBytes _SIG_BYTES $ \out -> do
+      suc <- secp256k1_ecdsa_signature_parse_compact tex out com
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let par = F.castPtr out
+      BS.packCStringLen (par, _SIG_BYTES)
+
+serialize_compact :: Ptr Context -> BS.ByteString -> IO BS.ByteString
+serialize_compact tex bs =
+  BS.useAsCString bs $ \(F.castPtr -> sig) ->
+    A.allocaBytes _SIG_BYTES $ \out -> do
+      -- always returns 1
+      _ <- secp256k1_ecdsa_signature_serialize_compact tex out sig
+      let enc = F.castPtr out
+      BS.packCStringLen (enc, _SIG_BYTES)
+
 parse_pubkey :: Ptr Context -> BS.ByteString -> IO BS.ByteString
 parse_pubkey tex bs =
   BS.useAsCStringLen bs $ \(F.castPtr -> pub, fromIntegral -> len) ->
@@ -262,6 +328,58 @@ serialize_pubkey_uncompressed tex bs =
         let enc = F.castPtr out
             nel = fromIntegral pec
         BS.packCStringLen (enc, nel)
+
+tweak_pub_add
+  :: Ptr Context
+  -> BS.ByteString
+  -> BS.ByteString
+  -> IO BS.ByteString
+tweak_pub_add tex (BS.copy -> pub) wee =
+  BS.useAsCString pub $ \(F.castPtr -> out) ->
+    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+      suc <- secp256k1_ec_pubkey_tweak_add tex out eek
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let enc = F.castPtr out
+      BS.packCStringLen (enc, _PUB_BYTES_INTERNAL)
+
+tweak_pub_mul
+  :: Ptr Context
+  -> BS.ByteString
+  -> BS.ByteString
+  -> IO BS.ByteString
+tweak_pub_mul tex (BS.copy -> pub) wee =
+  BS.useAsCString pub $ \(F.castPtr -> out) ->
+    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+      suc <- secp256k1_ec_pubkey_tweak_mul tex out eek
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let enc = F.castPtr out
+      BS.packCStringLen (enc, _PUB_BYTES_INTERNAL)
+
+tweak_sec_add
+  :: Ptr Context
+  -> BS.ByteString
+  -> BS.ByteString
+  -> IO BS.ByteString
+tweak_sec_add tex (BS.copy -> sec) wee =
+  BS.useAsCString sec $ \(F.castPtr -> out) ->
+    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+      suc <- secp256k1_ec_seckey_tweak_add tex out eek
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let enc = F.castPtr out
+      BS.packCStringLen (enc, _SEC_BYTES)
+
+tweak_sec_mul
+  :: Ptr Context
+  -> BS.ByteString
+  -> BS.ByteString
+  -> IO BS.ByteString
+tweak_sec_mul tex (BS.copy -> sec) wee =
+  BS.useAsCString sec $ \(F.castPtr -> out) ->
+    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+      suc <- secp256k1_ec_seckey_tweak_mul tex out eek
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let enc = F.castPtr out
+      BS.packCStringLen (enc, _SEC_BYTES)
 
 sign_ecdsa :: Ptr Context -> BS.ByteString -> BS.ByteString -> IO BS.ByteString
 sign_ecdsa tex key msg =
@@ -383,6 +501,8 @@ schnorrsig_verify tex sig msg pub =
 
 -- test inputs
 
+-- mostly grabbed from haskoin/secp256k1-haskell
+
 -- DER-encoded signature
 _DER :: BS.ByteString
 _DER = mconcat [
@@ -403,6 +523,43 @@ _SEC :: BS.ByteString
 _SEC = mconcat [
     "\246RU\tMws\237\141\212\ETB\186\220\159\192E\193\248\SI\220[-%\ETB"
   , "+\ETX\FS\230\147>\ETX\154"
+  ]
+
+-- 32-bytes
+_TWEAK :: BS.ByteString
+_TWEAK = mconcat [
+    "\245\203\231\216\129\130\164\184\228\NUL\249k\ACK\DC2\137!\134J"
+  , "\CAN\CAN}\DC1L\138\232T\ESCVl\138\206\NUL"
+  ]
+
+-- _PUB add-tweaked with _TWEAK
+_PUB_ADD_TWEAKED :: BS.ByteString
+_PUB_ADD_TWEAKED = mconcat [
+    "\EOTD\FS9\130\185uvdn\r\240\201g6\ACK=\246\180/.\229f\209;\159d$0-"
+  , "\DC3y\229\CAN\253\200z\DC4\197C[\255z]\180U B\203A \198\184jK\189="
+  , "\ACKC\243\193J\208\DC3h"
+  ]
+
+-- _PUB mul-tweaked with _TWEAK
+_PUB_MUL_TWEAKED :: BS.ByteString
+_PUB_MUL_TWEAKED = mconcat [
+    "\EOT\243y\220\153\205\245\200>C=\239\162g\251\179\&7}a\214\183y"
+  , "\192j\SOL\226\154\227\255SS\177*\228\156\157\a\231\&6\143+\165"
+  , "\164F\194\ETX%\\\233\DC22)\145\162\214\169\213\213v\FSa\237\CANE"
+  ]
+
+-- _SEC add-tweaked with _TWEAK
+_SEC_ADD_TWEAKED :: BS.ByteString
+_SEC_ADD_TWEAKED = mconcat [
+    "\236\RS<\225\206\250\CAN\166q\213\DC1%\226\178Ih\141\147K\SO(\245"
+  , "\209fS\132\217\176/\146\144Y"
+  ]
+
+-- _SEC mul-tweaked with _TWEAK
+_SEC_MUL_TWEAKED :: BS.ByteString
+_SEC_MUL_TWEAKED = mconcat [
+    "\169oYbI:\203\ETB\159`\168j\151\133\252z0\224\195\155d\192\157$\254"
+  , "\ACKM\154\239\NAK\228\192"
   ]
 
 -- 33-byte (compressed) public key
