@@ -22,19 +22,26 @@ module Crypto.Secp256k1.Internal (
   , secp256k1_context_randomize
 
   -- ec
+  , PubKey64
+  , SecKey32
+  , Tweak32
   , secp256k1_ec_pubkey_parse
   , secp256k1_ec_pubkey_serialize
   , secp256k1_ec_pubkey_create
+  , secp256k1_ec_pubkey_tweak_add
+  , secp256k1_ec_pubkey_tweak_mul
+  , secp256k1_ec_seckey_tweak_add
+  , secp256k1_ec_seckey_tweak_mul
 
   -- ecdsa
   , MsgHash32
-  , PubKey64
-  , SecKey32
   , Sig64
   , secp256k1_ecdsa_sign
   , secp256k1_ecdsa_verify
   , secp256k1_ecdsa_signature_parse_der
   , secp256k1_ecdsa_signature_serialize_der
+  , secp256k1_ecdsa_signature_parse_compact
+  , secp256k1_ecdsa_signature_serialize_compact
 
   -- ecdh
   , secp256k1_ecdh
@@ -147,6 +154,9 @@ data PubKey64
 -- 32-byte secret key
 data SecKey32
 
+-- 32-byte tweak
+data Tweak32
+
 foreign import capi
   "secp256k1.h haskellsecp256k1_v0_1_0_ec_pubkey_parse"
   secp256k1_ec_pubkey_parse
@@ -172,6 +182,38 @@ foreign import capi
     :: Ptr Context
     -> Ptr PubKey64
     -> Ptr SecKey32
+    -> IO CInt
+
+foreign import capi
+  "secp256k1.h haskellsecp256k1_v0_1_0_ec_seckey_tweak_add"
+  secp256k1_ec_seckey_tweak_add
+    :: Ptr Context
+    -> Ptr SecKey32
+    -> Ptr Tweak32
+    -> IO CInt
+
+foreign import capi
+  "secp256k1.h haskellsecp256k1_v0_1_0_ec_pubkey_tweak_add"
+  secp256k1_ec_pubkey_tweak_add
+    :: Ptr Context
+    -> Ptr PubKey64
+    -> Ptr Tweak32
+    -> IO CInt
+
+foreign import capi
+  "secp256k1.h haskellsecp256k1_v0_1_0_ec_seckey_tweak_mul"
+  secp256k1_ec_seckey_tweak_mul
+    :: Ptr Context
+    -> Ptr SecKey32
+    -> Ptr Tweak32
+    -> IO CInt
+
+foreign import capi
+  "secp256k1.h haskellsecp256k1_v0_1_0_ec_pubkey_tweak_mul"
+  secp256k1_ec_pubkey_tweak_mul
+    :: Ptr Context
+    -> Ptr PubKey64
+    -> Ptr Tweak32
     -> IO CInt
 
 -- ecdsa
@@ -217,6 +259,22 @@ foreign import capi
     :: Ptr Context
     -> Ptr CUChar
     -> Ptr CSize
+    -> Ptr Sig64
+    -> IO CInt
+
+foreign import capi
+  "secp256k1.h haskellsecp256k1_v0_1_0_ecdsa_signature_parse_compact"
+  secp256k1_ecdsa_signature_parse_compact
+    :: Ptr Context
+    -> Ptr Sig64
+    -> Ptr CUChar
+    -> IO CInt
+
+foreign import capi
+  "secp256k1.h haskellsecp256k1_v0_1_0_ecdsa_signature_serialize_compact"
+  secp256k1_ecdsa_signature_serialize_compact
+    :: Ptr Context
+    -> Ptr CUChar
     -> Ptr Sig64
     -> IO CInt
 
