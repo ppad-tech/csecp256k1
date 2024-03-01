@@ -28,10 +28,16 @@ module Crypto.Secp256k1 (
 
   , parse_der
   , serialize_der
+  , parse_compact
+  , serialize_compact
 
   , Pub
   , derive_pub
   , parse_pub
+  , tweak_pub_add
+  , tweak_pub_mul
+  , tweak_sec_add
+  , tweak_sec_mul
   , serialize_pub
   , serialize_pub_u
   , XOnlyPub
@@ -263,6 +269,78 @@ serialize_pub_in for (Context tex) (Pub pub) =
       Compressed -> _COMPRESSED_FLAG
       Uncompressed -> _UNCOMPRESSED_FLAG
 
+-- | Additively tweak a public key with the supplied 32-byte tweak.
+--
+--   >>> wrcontext $ \tex -> tweak_pub_add pub tweak
+tweak_pub_add
+  :: Context
+  -> Pub
+  -> BS.ByteString -- ^ 32-byte tweak value
+  -> IO Pub
+tweak_pub_add (Context tex) (Pub pub) wee = do
+  let cop = BS.copy pub
+  BS.useAsCString cop $ \(F.castPtr -> out) ->
+    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+      suc <- secp256k1_ec_pubkey_tweak_add tex out eek
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let enc = F.castPtr out
+      key <- BS.packCStringLen (enc, _PUB_BYTES_INTERNAL)
+      pure (Pub key)
+
+-- | Multiplicatively tweak a public key with the supplied 32-byte
+--   tweak.
+--
+--   >>> wrcontext $ \tex -> tweak_pub_mul pub tweak
+tweak_pub_mul
+  :: Context
+  -> Pub
+  -> BS.ByteString -- ^ 32-byte tweak value
+  -> IO Pub
+tweak_pub_mul (Context tex) (Pub pub) wee = do
+  let cop = BS.copy pub
+  BS.useAsCString cop $ \(F.castPtr -> out) ->
+    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+      suc <- secp256k1_ec_pubkey_tweak_mul tex out eek
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let enc = F.castPtr out
+      key <- BS.packCStringLen (enc, _PUB_BYTES_INTERNAL)
+      pure (Pub key)
+
+-- | Additively tweak a secret key with the supplied 32-byte tweak.
+--
+--   >>> wrcontext $ \tex -> tweak_sec_add sec tweak
+tweak_sec_add
+  :: Context
+  -> BS.ByteString    -- ^ 32-byte secret key
+  -> BS.ByteString    -- ^ 32-byte tweak value
+  -> IO BS.ByteString -- ^ 32-byte secret key
+tweak_sec_add (Context tex) key wee = do
+  let sec = BS.copy key
+  BS.useAsCString sec $ \(F.castPtr -> out) ->
+    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+      suc <- secp256k1_ec_seckey_tweak_add tex out eek
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let enc = F.castPtr out
+      BS.packCStringLen (enc, _SEC_BYTES)
+
+-- | Multiplicatively tweak a secret key with the supplied 32-byte
+--   tweak.
+--
+--   >>> wrcontext $ \tex -> tweak_sec_mul sec tweak
+tweak_sec_mul
+  :: Context
+  -> BS.ByteString    -- ^ 32-byte secret key
+  -> BS.ByteString    -- ^ 32-byte tweak value
+  -> IO BS.ByteString -- ^ 32-byte secret key
+tweak_sec_mul (Context tex) key wee = do
+  let sec = BS.copy key
+  BS.useAsCString sec $ \(F.castPtr -> out) ->
+    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+      suc <- secp256k1_ec_seckey_tweak_mul tex out eek
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let enc = F.castPtr out
+      BS.packCStringLen (enc, _SEC_BYTES)
+
 -- ecdsa
 
 -- | Sign a 32-byte message hash with the provided secret key.
@@ -348,6 +426,31 @@ serialize_der (Context tex) (Sig sig) =
         let der = F.castPtr out
             nel = fromIntegral pek
         BS.packCStringLen (der, nel)
+
+parse_compact
+  :: Context
+  -> BS.ByteString -- ^ 64-byte compact signature
+  -> IO Sig
+parse_compact (Context tex) bs =
+  BS.useAsCString bs $ \(F.castPtr -> com) ->
+    A.allocaBytes _SIG_BYTES $ \out -> do
+      suc <- secp256k1_ecdsa_signature_parse_compact tex out com
+      when (suc /= 1) $ throwIO Secp256k1Error
+      let par = F.castPtr out
+      enc <- BS.packCStringLen (par, _SIG_BYTES)
+      pure (Sig enc)
+
+serialize_compact
+  :: Context
+  -> Sig
+  -> IO BS.ByteString
+serialize_compact (Context tex) (Sig sig) =
+  BS.useAsCString sig $ \(F.castPtr -> sip) ->
+    A.allocaBytes _SIG_BYTES $ \out -> do
+      -- always returns 1
+      _ <- secp256k1_ecdsa_signature_serialize_compact tex out sip
+      let enc = F.castPtr out
+      BS.packCStringLen (enc, _SIG_BYTES)
 
 -- extrakeys
 
