@@ -582,33 +582,42 @@ ecdh (Context tex) (Pub pub) sec =
 
 -- schnorr
 
--- | Sign a 32-byte message hash with the provided secret key.
+-- | Sign a 32-byte message hash with the provided secret key, using the
+--   provided 32 bytes of fresh auxiliary entropy.
 --
---   BIP340 recommends that 32 bytes of auxiliary entropy be added when
---   signing, and bitcoin-core/secp256k1 allows this, but the added
---   entropy is only supplemental to security, and is not required. We
---   omit the feature here, for API simplicity.
+--   BIP340 recommends that 32 bytes of fresh auxiliary entropy be
+--   generated and added at signing time as additional protection
+--   against side-channel attacks (namely, to thwart so-called "fault
+--   injection" attacks). This entropy is /supplemental/ to security,
+--   and the cryptographic security of the signature scheme itself does
+--   not rely on it, so it is not strictly required; 32 zero bytes can
+--   be used in its stead.
 --
---   The resulting 64-byte signature is safe to serialize, and so is not
+--   The resulting 64-byte Schnorr signature is portable, and so is not
 --   wrapped in a newtype.
 --
 --   The sizes of the inputs are not checked.
 --
---   >>> wrcontext entropy $ \tex -> sign_schnorr tex msg sec
+--   >>> import qualified System.Entropy as E  -- example entropy source
+--   >>> enn <- E.getEntropy 32
+--   >>> aux <- E.getEntropy 32
+--   >>> wrcontext enn $ \tex -> sign_schnorr tex msg sec aux
 sign_schnorr
   :: Context
   -> BS.ByteString    -- ^ 32-byte message hash
   -> BS.ByteString    -- ^ 32-byte secret key
+  -> BS.ByteString    -- ^ 32 bytes of fresh entropy
   -> IO BS.ByteString -- ^ 64-byte signature
-sign_schnorr c@(Context tex) msg sec =
+sign_schnorr c@(Context tex) msg sec aux =
   A.allocaBytes _SIG_BYTES $ \out ->
-    BS.useAsCString msg $ \(F.castPtr -> has) -> do
-      KeyPair per <- create_keypair c sec
-      BS.useAsCString per $ \(F.castPtr -> pur) -> do
-        suc <- secp256k1_schnorrsig_sign32 tex out has pur F.nullPtr
-        when (suc /= 1) $ throwIO Secp256k1Error
-        let enc = F.castPtr out
-        BS.packCStringLen (enc, _SIG_BYTES)
+    BS.useAsCString msg $ \(F.castPtr -> has) ->
+      BS.useAsCString aux $ \(F.castPtr -> enn) -> do
+        KeyPair per <- create_keypair c sec
+        BS.useAsCString per $ \(F.castPtr -> pur) -> do
+          suc <- secp256k1_schnorrsig_sign32 tex out has pur enn
+          when (suc /= 1) $ throwIO Secp256k1Error
+          let enc = F.castPtr out
+          BS.packCStringLen (enc, _SIG_BYTES)
 
 -- | Verify a 64-byte Schnorr signature for the provided 32-byte message
 --   hash with the supplied public key.
