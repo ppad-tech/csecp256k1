@@ -106,7 +106,7 @@ benchmark csecp256k1-bench
   main-is:             Main.hs
 
   ghc-options:
-    -rtsopts -O2 -Wall
+    -rtsopts -O2 -Wall -fno-warn-orphans
 
   build-depends:
       base
