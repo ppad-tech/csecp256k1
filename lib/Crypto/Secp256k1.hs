@@ -45,7 +45,7 @@ module Crypto.Secp256k1 (
   , parse_xonly
   , serialize_xonly
   , KeyPair
-  , create_keypair
+  , keypair
   , keypair_pub
   , keypair_sec
 
@@ -101,7 +101,7 @@ instance Show XOnlyPub where
 -- | A bitcoin-core/secp256k1-internal keypair.
 --
 --   Create a value of this type by passing a secret key to
---   'create_keypair'.
+--   'keypair'.
 newtype KeyPair = KeyPair BS.ByteString
 
 instance Show KeyPair where
@@ -515,13 +515,13 @@ serialize_xonly (Context tex) (XOnlyPub pux) =
 --
 --   The size of the input is not checked.
 --
---   >>> wrcontext entropy $ \tex -> create_keypair tex sec
+--   >>> wrcontext entropy $ \tex -> keypair tex sec
 --   "<bitcoin-core/secp256k1 keypair>"
-create_keypair
+keypair
   :: Context
   -> BS.ByteString -- ^ 32-byte secret key
   -> IO KeyPair
-create_keypair (Context tex) sec =
+keypair (Context tex) sec =
   A.allocaBytes _KEYPAIR_BYTES $ \out ->
     BS.useAsCString sec $ \(F.castPtr -> key) -> do
       suc <- secp256k1_keypair_create tex out key
@@ -612,7 +612,7 @@ sign_schnorr c@(Context tex) msg sec aux =
   A.allocaBytes _SIG_BYTES $ \out ->
     BS.useAsCString msg $ \(F.castPtr -> has) ->
       BS.useAsCString aux $ \(F.castPtr -> enn) -> do
-        KeyPair per <- create_keypair c sec
+        KeyPair per <- keypair c sec
         BS.useAsCString per $ \(F.castPtr -> pur) -> do
           suc <- secp256k1_schnorrsig_sign32 tex out has pur enn
           when (suc /= 1) $ throwIO Secp256k1Error
