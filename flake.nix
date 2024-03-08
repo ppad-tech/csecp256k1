@@ -29,8 +29,6 @@
           # dependencies like secp256k1-sys, so enable it manually
           packages.${lib} = hlib.doHaddock hpkgs.${lib};
 
-          packages."${lib}-bench" = hlib.doBenchmark hpkgs.${lib};
-
           defaultPackage = self.packages.${system}.${lib};
 
           devShells.default = hpkgs.shellFor {
