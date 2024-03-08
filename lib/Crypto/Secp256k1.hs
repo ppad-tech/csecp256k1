@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
 
@@ -56,6 +58,7 @@ import Control.Exception (Exception, bracket, throwIO)
 import Control.Monad (when)
 import Crypto.Secp256k1.Internal hiding (Context)
 import qualified Crypto.Secp256k1.Internal as I (Context)
+import GHC.Generics
 import qualified Data.ByteString as BS
 import qualified Foreign.Marshal.Alloc as A (alloca, allocaBytes)
 import Foreign.Ptr (Ptr)
@@ -82,6 +85,7 @@ instance Show Context where
 --   public key via 'parse_pub', deriving one from a secret key via
 --   'create_pub', or extracting one from a keypair via 'keypair_pub'.
 newtype Pub = Pub BS.ByteString
+  deriving stock Generic
 
 instance Show Pub where
   show _ = "<bitcoin-core/secp256k1 public key>"
@@ -94,6 +98,7 @@ instance Show Pub where
 --   Create a value of this type from a 'Pub' via 'xonly', or parse one
 --   directly via 'parse_xonly'.
 newtype XOnlyPub = XOnlyPub BS.ByteString
+  deriving stock Generic
 
 instance Show XOnlyPub where
   show _ = "<bitcoin-core/secp256k1 x-only public key>"
@@ -103,6 +108,7 @@ instance Show XOnlyPub where
 --   Create a value of this type by passing a secret key to
 --   'keypair'.
 newtype KeyPair = KeyPair BS.ByteString
+  deriving stock Generic
 
 instance Show KeyPair where
   show _ = "<bitcoin-core/secp256k1 keypair>"
@@ -112,6 +118,7 @@ instance Show KeyPair where
 --   Create a value of this type via 'sign', or parse a DER-encoded
 --   signature via 'parse_der'.
 newtype Sig = Sig BS.ByteString
+  deriving stock Generic
 
 instance Show Sig where
   show _ = "<bitcoin-core/secp256k1 signature>"
