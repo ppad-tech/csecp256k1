@@ -17,7 +17,7 @@
 -- supporting ECDSA/Schnorr signatures and ECDH secret computation.
 
 module Crypto.Secp256k1 (
-    Context
+    Context(..)
   , wcontext
   , wrcontext
 
@@ -74,7 +74,12 @@ import qualified Foreign.Storable as S (poke, peek)
 --
 --   You should create and use values of this type via 'wrcontext' or
 --   'wcontext'.
+--
+--   The data constructor is exported only to make the implementation
+--   easier to benchmark. You should /not/ pattern match on or
+--   manipulate context values.
 newtype Context = Context (Ptr I.Context)
+  deriving stock Generic
 
 instance Show Context where
   show (Context tex) = "<bitcoin-core/secp256k1 context " <> show tex <> ">"

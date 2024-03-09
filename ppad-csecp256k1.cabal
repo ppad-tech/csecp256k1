@@ -33,6 +33,39 @@ library
     , bytestring
     , secp256k1-sys
 
+test-suite csecp256k1-tests
+  type:                exitcode-stdio-1.0
+  default-language:    Haskell2010
+  hs-source-dirs:      test
+  main-is:             Main.hs
+
+  ghc-options:
+    -rtsopts -Wall
+
+  build-depends:
+      base
+    , bytestring
+    , ppad-csecp256k1
+    , tasty
+    , tasty-hunit
+
+benchmark csecp256k1-bench
+  type:                exitcode-stdio-1.0
+  default-language:    Haskell2010
+  hs-source-dirs:      bench
+  main-is:             Main.hs
+
+  ghc-options:
+    -rtsopts -O2 -Wall -fno-warn-orphans
+
+  build-depends:
+      base
+    , bytestring
+    , criterion
+    , deepseq
+    , ppad-csecp256k1
+    , secp256k1-sys
+
 library secp256k1-sys
   default-language: Haskell2010
   hs-source-dirs:   secp256k1-sys/lib
@@ -82,36 +115,4 @@ test-suite secp256k1-sys-tests
     , secp256k1-sys
     , tasty
     , tasty-hunit
-
-test-suite csecp256k1-tests
-  type:                exitcode-stdio-1.0
-  default-language:    Haskell2010
-  hs-source-dirs:      test
-  main-is:             Main.hs
-
-  ghc-options:
-    -rtsopts -Wall
-
-  build-depends:
-      base
-    , bytestring
-    , ppad-csecp256k1
-    , tasty
-    , tasty-hunit
-
-benchmark csecp256k1-bench
-  type:                exitcode-stdio-1.0
-  default-language:    Haskell2010
-  hs-source-dirs:      bench
-  main-is:             Main.hs
-
-  ghc-options:
-    -rtsopts -O2 -Wall -fno-warn-orphans
-
-  build-depends:
-      base
-    , bytestring
-    , criterion
-    , deepseq
-    , ppad-csecp256k1
 
