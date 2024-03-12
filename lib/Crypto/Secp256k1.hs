@@ -136,8 +136,12 @@ instance Show Sig where
 --   underlying C functions) will typically throw a 'Secp256k1Error'
 --   exception.
 data Secp256k1Exception =
+    -- | Thrown when a bitcoin-core/secp256k1 function returns a value
+    --   indicating failure.
     Secp256k1Error
-  | InsufficientEntropy
+    -- | Thrown when a csecp256k1 function has been passed a bad (i.e.,
+    --   incorrectly-sized) input.
+  | CSecp256k1Error
   deriving Show
 
 instance Exception Secp256k1Exception
@@ -166,14 +170,11 @@ wcontext = bracket create destroy where
     secp256k1_context_destroy tex
 
 -- | Same as 'wcontext', but randomize the bitcoin-core/secp256k1
---   context with the provided entropy before executing the supplied
---   continuation.
+--   context with the provided 32 bytes of entropy before executing the
+--   supplied continuation.
 --
 --   Use this function to execute computations that may benefit from
 --   additional side-channel attack protection.
---
---   You must supply at least 32 bytes of entropy; any less will result
---   in an 'InsufficientEntropy' exception.
 --
 --   >>> wrcontext entropy $ \tex -> sign tex sec msg
 --   "<bitcoin-core/secp256k1 signature>"
@@ -182,7 +183,7 @@ wrcontext
   -> (Context -> IO a) -- ^ continuation to run in the context
   -> IO a
 wrcontext enn con
-    | BS.length enn < 32 = throwIO InsufficientEntropy
+    | BS.length enn /= 32 = throwIO CSecp256k1Error
     | otherwise = bracket create destroy con
   where
     create = do
@@ -199,26 +200,23 @@ wrcontext enn con
 
 -- | Derive a public key from a 32-byte secret key.
 --
---   The size of the input is not checked.
---
 --   >>> wrcontext entropy $ \tex -> derive_pub tex sec
 --   "<bitcoin-core/secp256k1 public key>"
 derive_pub
   :: Context
   -> BS.ByteString -- ^ 32-byte secret key
   -> IO Pub
-derive_pub (Context tex) bs =
-  BS.useAsCString bs $ \(F.castPtr -> sec) ->
-    A.allocaBytes _PUB_BYTES_INTERNAL $ \out -> do
-      suc <- secp256k1_ec_pubkey_create tex out sec
-      when (suc /= 1) $ throwIO Secp256k1Error
-      let pub = F.castPtr out
-      key <- BS.packCStringLen (pub, _PUB_BYTES_INTERNAL)
-      pure (Pub key)
+derive_pub (Context tex) bs
+  | BS.length bs /= 32 = throwIO CSecp256k1Error
+  | otherwise = BS.useAsCString bs $ \(F.castPtr -> sec) ->
+      A.allocaBytes _PUB_BYTES_INTERNAL $ \out -> do
+        suc <- secp256k1_ec_pubkey_create tex out sec
+        when (suc /= 1) $ throwIO Secp256k1Error
+        let pub = F.castPtr out
+        key <- BS.packCStringLen (pub, _PUB_BYTES_INTERNAL)
+        pure (Pub key)
 
 -- | Parse a compressed (33-byte) or uncompressed (65-byte) public key.
---
---   The size of the input is not checked.
 --
 --   >>> wcontext $ \tex -> parse_pub tex bs
 --   "<bitcoin-core/secp256k1 public key>"
@@ -289,15 +287,17 @@ tweak_pub_add
   -> Pub
   -> BS.ByteString -- ^ 32-byte tweak value
   -> IO Pub
-tweak_pub_add (Context tex) (Pub pub) wee = do
-  let cop = BS.copy pub
-  BS.useAsCString cop $ \(F.castPtr -> out) ->
-    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
-      suc <- secp256k1_ec_pubkey_tweak_add tex out eek
-      when (suc /= 1) $ throwIO Secp256k1Error
-      let enc = F.castPtr out
-      key <- BS.packCStringLen (enc, _PUB_BYTES_INTERNAL)
-      pure (Pub key)
+tweak_pub_add (Context tex) (Pub pub) wee
+  | BS.length wee /= 32 = throwIO CSecp256k1Error
+  | otherwise = do
+      let cop = BS.copy pub
+      BS.useAsCString cop $ \(F.castPtr -> out) ->
+        BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+          suc <- secp256k1_ec_pubkey_tweak_add tex out eek
+          when (suc /= 1) $ throwIO Secp256k1Error
+          let enc = F.castPtr out
+          key <- BS.packCStringLen (enc, _PUB_BYTES_INTERNAL)
+          pure (Pub key)
 
 -- | Multiplicatively tweak a public key with the supplied 32-byte
 --   tweak.
@@ -308,15 +308,17 @@ tweak_pub_mul
   -> Pub
   -> BS.ByteString -- ^ 32-byte tweak value
   -> IO Pub
-tweak_pub_mul (Context tex) (Pub pub) wee = do
-  let cop = BS.copy pub
-  BS.useAsCString cop $ \(F.castPtr -> out) ->
-    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
-      suc <- secp256k1_ec_pubkey_tweak_mul tex out eek
-      when (suc /= 1) $ throwIO Secp256k1Error
-      let enc = F.castPtr out
-      key <- BS.packCStringLen (enc, _PUB_BYTES_INTERNAL)
-      pure (Pub key)
+tweak_pub_mul (Context tex) (Pub pub) wee
+  | BS.length wee /= 32 = throwIO CSecp256k1Error
+  | otherwise = do
+      let cop = BS.copy pub
+      BS.useAsCString cop $ \(F.castPtr -> out) ->
+        BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+          suc <- secp256k1_ec_pubkey_tweak_mul tex out eek
+          when (suc /= 1) $ throwIO Secp256k1Error
+          let enc = F.castPtr out
+          key <- BS.packCStringLen (enc, _PUB_BYTES_INTERNAL)
+          pure (Pub key)
 
 -- | Additively tweak a secret key with the supplied 32-byte tweak.
 --
@@ -326,14 +328,16 @@ tweak_sec_add
   -> BS.ByteString    -- ^ 32-byte secret key
   -> BS.ByteString    -- ^ 32-byte tweak value
   -> IO BS.ByteString -- ^ 32-byte secret key
-tweak_sec_add (Context tex) key wee = do
-  let sec = BS.copy key
-  BS.useAsCString sec $ \(F.castPtr -> out) ->
-    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
-      suc <- secp256k1_ec_seckey_tweak_add tex out eek
-      when (suc /= 1) $ throwIO Secp256k1Error
-      let enc = F.castPtr out
-      BS.packCStringLen (enc, _SEC_BYTES)
+tweak_sec_add (Context tex) key wee
+  | BS.length key /= 32 || BS.length wee /= 32 = throwIO CSecp256k1Error
+  | otherwise = do
+      let sec = BS.copy key
+      BS.useAsCString sec $ \(F.castPtr -> out) ->
+        BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+          suc <- secp256k1_ec_seckey_tweak_add tex out eek
+          when (suc /= 1) $ throwIO Secp256k1Error
+          let enc = F.castPtr out
+          BS.packCStringLen (enc, _SEC_BYTES)
 
 -- | Multiplicatively tweak a secret key with the supplied 32-byte
 --   tweak.
@@ -344,20 +348,20 @@ tweak_sec_mul
   -> BS.ByteString    -- ^ 32-byte secret key
   -> BS.ByteString    -- ^ 32-byte tweak value
   -> IO BS.ByteString -- ^ 32-byte secret key
-tweak_sec_mul (Context tex) key wee = do
-  let sec = BS.copy key
-  BS.useAsCString sec $ \(F.castPtr -> out) ->
-    BS.useAsCString wee $ \(F.castPtr -> eek) -> do
-      suc <- secp256k1_ec_seckey_tweak_mul tex out eek
-      when (suc /= 1) $ throwIO Secp256k1Error
-      let enc = F.castPtr out
-      BS.packCStringLen (enc, _SEC_BYTES)
+tweak_sec_mul (Context tex) key wee
+  | BS.length key /= 32 || BS.length wee /= 32 = throwIO CSecp256k1Error
+  | otherwise = do
+      let sec = BS.copy key
+      BS.useAsCString sec $ \(F.castPtr -> out) ->
+        BS.useAsCString wee $ \(F.castPtr -> eek) -> do
+          suc <- secp256k1_ec_seckey_tweak_mul tex out eek
+          when (suc /= 1) $ throwIO Secp256k1Error
+          let enc = F.castPtr out
+          BS.packCStringLen (enc, _SEC_BYTES)
 
 -- ecdsa
 
 -- | Sign a 32-byte message hash with the provided secret key.
---
---   The sizes of the inputs are not checked.
 --
 --   >>> wrcontext entropy $ \tex -> sign tex sec msg
 --   "<bitcoin-core/secp256k1 signature>"
@@ -366,22 +370,21 @@ sign
   -> BS.ByteString -- ^ 32-byte secret key
   -> BS.ByteString -- ^ 32-byte message hash
   -> IO Sig
-sign (Context tex) key msg =
-  A.allocaBytes _SIG_BYTES $ \out ->
-    BS.useAsCString msg $ \(F.castPtr -> has) ->
-      BS.useAsCString key $ \(F.castPtr -> sec) -> do
-        suc <- secp256k1_ecdsa_sign tex out has sec F.nullPtr F.nullPtr
-        when (suc /= 1) $ throwIO Secp256k1Error
-        let sig = F.castPtr out
-        enc <- BS.packCStringLen (sig, _SIG_BYTES)
-        pure (Sig enc)
+sign (Context tex) key msg
+  | BS.length key /= 32 || BS.length msg /= 32 = throwIO CSecp256k1Error
+  | otherwise = A.allocaBytes _SIG_BYTES $ \out ->
+      BS.useAsCString msg $ \(F.castPtr -> has) ->
+        BS.useAsCString key $ \(F.castPtr -> sec) -> do
+          suc <- secp256k1_ecdsa_sign tex out has sec F.nullPtr F.nullPtr
+          when (suc /= 1) $ throwIO Secp256k1Error
+          let sig = F.castPtr out
+          enc <- BS.packCStringLen (sig, _SIG_BYTES)
+          pure (Sig enc)
 
 -- | Verify an ECDSA signature for the provided message hash with the
 --   supplied public key.
 --
 --   Returns 'True' for a verifying signature, 'False' otherwise.
---
---   The size of the input is not checked.
 --
 --   >>> wcontext $ \tex -> verify tex pub msg good_sig
 --   True
@@ -393,12 +396,13 @@ verify
   -> BS.ByteString -- ^ 32-byte message hash
   -> Sig
   -> IO Bool
-verify (Context tex) (Pub pub) msg (Sig sig) =
-  BS.useAsCString pub $ \(F.castPtr -> key) ->
-    BS.useAsCString sig $ \(F.castPtr -> sip) ->
-      BS.useAsCString msg $ \(F.castPtr -> has) -> do
-        suc <- secp256k1_ecdsa_verify tex sip has key
-        pure (suc == 1)
+verify (Context tex) (Pub pub) msg (Sig sig)
+  | BS.length msg /= 32 = throwIO CSecp256k1Error
+  | otherwise = BS.useAsCString pub $ \(F.castPtr -> key) ->
+      BS.useAsCString sig $ \(F.castPtr -> sip) ->
+        BS.useAsCString msg $ \(F.castPtr -> has) -> do
+          suc <- secp256k1_ecdsa_verify tex sip has key
+          pure (suc == 1)
 
 -- | Parse a DER-encoded bytestring into a signature.
 --
@@ -490,8 +494,6 @@ xonly (Context tex) (Pub pub) =
 -- | Parse a compressed (33-byte) or uncompressed (65-byte) public key into
 --   an x-only public key.
 --
---   The size of the input is not checked.
---
 --   >>> wcontext $ \tex -> parse_xonly tex bytestring
 --   "<bitcoin-core/secp256k1 x-only public key>"
 parse_xonly
@@ -525,22 +527,21 @@ serialize_xonly (Context tex) (XOnlyPub pux) =
 
 -- | Derive a keypair from the provided 32-byte secret key.
 --
---   The size of the input is not checked.
---
 --   >>> wrcontext entropy $ \tex -> keypair tex sec
 --   "<bitcoin-core/secp256k1 keypair>"
 keypair
   :: Context
   -> BS.ByteString -- ^ 32-byte secret key
   -> IO KeyPair
-keypair (Context tex) sec =
-  A.allocaBytes _KEYPAIR_BYTES $ \out ->
-    BS.useAsCString sec $ \(F.castPtr -> key) -> do
-      suc <- secp256k1_keypair_create tex out key
-      when (suc /= 1) $ throwIO Secp256k1Error
-      let enc = F.castPtr out
-      per <- BS.packCStringLen (enc, _KEYPAIR_BYTES)
-      pure (KeyPair per)
+keypair (Context tex) sec
+  | BS.length sec /= 32 = throwIO CSecp256k1Error
+  | otherwise = A.allocaBytes _KEYPAIR_BYTES $ \out ->
+      BS.useAsCString sec $ \(F.castPtr -> key) -> do
+        suc <- secp256k1_keypair_create tex out key
+        when (suc /= 1) $ throwIO Secp256k1Error
+        let enc = F.castPtr out
+        per <- BS.packCStringLen (enc, _KEYPAIR_BYTES)
+        pure (KeyPair per)
 
 -- | Extract a public key from a keypair.
 --
@@ -575,22 +576,22 @@ keypair_sec (Context tex) (KeyPair per) =
 -- | Compute an ECDH secret key from the provided public key and
 --   (32-byte) secret key.
 --
---   The size of the input is not checked.
---
 --   >>> wrcontext entropy $ \tex -> ecdh tex pub sec
 ecdh
   :: Context
   -> Pub
   -> BS.ByteString    -- ^ 32-byte secret key
   -> IO BS.ByteString -- ^ 32-byte secret key
-ecdh (Context tex) (Pub pub) sec =
-  A.allocaBytes _SEC_BYTES $ \out ->
-    BS.useAsCString pub $ \(F.castPtr -> pup) ->
-      BS.useAsCString sec $ \(F.castPtr -> sep) -> do
-        suc <- secp256k1_ecdh tex out pup sep F.nullPtr F.nullPtr
-        when (suc /= 1) $ throwIO Secp256k1Error
-        let key = F.castPtr out
-        BS.packCStringLen (key, _SEC_BYTES)
+ecdh (Context tex) (Pub pub) sec
+  | BS.length sec /= 32 = throwIO CSecp256k1Error
+  | otherwise =
+      A.allocaBytes _SEC_BYTES $ \out ->
+        BS.useAsCString pub $ \(F.castPtr -> pup) ->
+          BS.useAsCString sec $ \(F.castPtr -> sep) -> do
+            suc <- secp256k1_ecdh tex out pup sep F.nullPtr F.nullPtr
+            when (suc /= 1) $ throwIO Secp256k1Error
+            let key = F.castPtr out
+            BS.packCStringLen (key, _SEC_BYTES)
 
 -- schnorr
 
@@ -608,8 +609,6 @@ ecdh (Context tex) (Pub pub) sec =
 --   The resulting 64-byte Schnorr signature is portable, and so is not
 --   wrapped in a newtype.
 --
---   The sizes of the inputs are not checked.
---
 --   >>> import qualified System.Entropy as E  -- example entropy source
 --   >>> enn <- E.getEntropy 32
 --   >>> aux <- E.getEntropy 32
@@ -620,21 +619,21 @@ sign_schnorr
   -> BS.ByteString    -- ^ 32-byte secret key
   -> BS.ByteString    -- ^ 32 bytes of fresh entropy
   -> IO BS.ByteString -- ^ 64-byte signature
-sign_schnorr c@(Context tex) msg sec aux =
-  A.allocaBytes _SIG_BYTES $ \out ->
-    BS.useAsCString msg $ \(F.castPtr -> has) ->
-      BS.useAsCString aux $ \(F.castPtr -> enn) -> do
-        KeyPair per <- keypair c sec
-        BS.useAsCString per $ \(F.castPtr -> pur) -> do
-          suc <- secp256k1_schnorrsig_sign32 tex out has pur enn
-          when (suc /= 1) $ throwIO Secp256k1Error
-          let enc = F.castPtr out
-          BS.packCStringLen (enc, _SIG_BYTES)
+sign_schnorr c@(Context tex) msg sec aux
+  | BS.length msg /= 32 || BS.length sec /= 32 || BS.length aux /= 32 =
+      throwIO CSecp256k1Error
+  | otherwise = A.allocaBytes _SIG_BYTES $ \out ->
+      BS.useAsCString msg $ \(F.castPtr -> has) ->
+        BS.useAsCString aux $ \(F.castPtr -> enn) -> do
+          KeyPair per <- keypair c sec
+          BS.useAsCString per $ \(F.castPtr -> pur) -> do
+            suc <- secp256k1_schnorrsig_sign32 tex out has pur enn
+            when (suc /= 1) $ throwIO Secp256k1Error
+            let enc = F.castPtr out
+            BS.packCStringLen (enc, _SIG_BYTES)
 
 -- | Verify a 64-byte Schnorr signature for the provided 32-byte message
 --   hash with the supplied public key.
---
---   The sizes of the inputs are not checked.
 --
 --   >>> wrcontext entropy $ \tex -> verify_schnorr tex pub msg sig
 verify_schnorr
@@ -643,11 +642,13 @@ verify_schnorr
   -> BS.ByteString -- ^ 32-byte message hash
   -> BS.ByteString -- ^ 64-byte signature
   -> IO Bool
-verify_schnorr c@(Context tex) pub msg sig =
-  BS.useAsCString sig $ \(F.castPtr -> sip) ->
-    BS.useAsCStringLen msg $ \(F.castPtr -> has, fromIntegral -> len) -> do
-      XOnlyPub pux <- xonly c pub
-      BS.useAsCString pux $ \(F.castPtr -> pax) -> do
-        suc <- secp256k1_schnorrsig_verify tex sip has len pax
-        pure (suc == 1)
+verify_schnorr c@(Context tex) pub msg sig
+  | BS.length msg /= 32 || BS.length sig /= 64 = throwIO CSecp256k1Error
+  | otherwise =
+    BS.useAsCString sig $ \(F.castPtr -> sip) ->
+      BS.useAsCStringLen msg $ \(F.castPtr -> has, fromIntegral -> len) -> do
+        XOnlyPub pux <- xonly c pub
+        BS.useAsCString pux $ \(F.castPtr -> pax) -> do
+          suc <- secp256k1_schnorrsig_verify tex sip has len pax
+          pure (suc == 1)
 
