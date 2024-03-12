@@ -15,6 +15,11 @@
 --
 -- This library exposes a minimal subset of functionality, primarily
 -- supporting ECDSA/Schnorr signatures and ECDH secret computation.
+--
+-- We're interacting with a C library here, and we don't pretend that we
+-- aren't. 'IO' is prevalent and unhidden, and asynchronous exceptions
+-- (in the form of 'Secp256k1Exception') are the error-handling method
+-- of choice.
 
 module Crypto.Secp256k1 (
     Context(..)
@@ -132,9 +137,6 @@ instance Show Sig where
 
 -- | A catch-all exception type.
 --
---   Internal library errors (i.e., non-unit return values in the
---   underlying C functions) will typically throw a 'Secp256k1Error'
---   exception.
 data Secp256k1Exception =
     -- | Thrown when a bitcoin-core/secp256k1 function returns a value
     --   indicating failure.
