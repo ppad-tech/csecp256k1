@@ -29,8 +29,8 @@ library
   exposed-modules:
       Crypto.Secp256k1
   build-depends:
-      base
-    , bytestring
+      base >= 4.9 && < 5
+    , bytestring >= 0.9 && < 0.13
     , secp256k1-sys
 
 test-suite csecp256k1-tests
