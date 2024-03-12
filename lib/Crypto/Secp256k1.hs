@@ -156,6 +156,17 @@ instance Exception Secp256k1Exception
 --   that has /not/ been randomized, and so /doesn't/ offer additional
 --   side-channel attack protection. For that, use 'wrcontext'.
 --
+--   Do /not/ attempt to use the created 'Context' value outside
+--   of a 'wcontext' or 'wrcontext' block, as the internal
+--   bitcoin-core/secp256k1 context will have been destroyed by then.
+--   For example, don't be cheeky and do something like:
+--
+--   > do
+--   >   context <- wcontext pure
+--   >   derive_pub context seckey
+--
+--   unless you like segfaults.
+--
 --   >>> wcontext $ \tex -> parse_pub tex bytestring
 --   "<bitcoin-core/secp256k1 public key>"
 wcontext
@@ -175,6 +186,9 @@ wcontext = bracket create destroy where
 --
 --   Use this function to execute computations that may benefit from
 --   additional side-channel attack protection.
+--
+--   As with 'wcontext', do /not/ attempt to use a created 'Context'
+--   value outside of the 'wrcontext' block.
 --
 --   >>> wrcontext entropy $ \tex -> sign tex sec msg
 --   "<bitcoin-core/secp256k1 signature>"
