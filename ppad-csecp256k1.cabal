@@ -9,6 +9,7 @@ maintainer:         jared@ppad.tech
 category:           Cryptography
 build-type:         Simple
 tested-with:        GHC == { 9.6.4, 9.4.8 }
+extra-doc-files:    CHANGELOG
 description:
   Bindings to bitcoin-core/secp256k1, which provides digital
   signatures and other cryptographic primitives on the secp256k1
