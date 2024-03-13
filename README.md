@@ -39,6 +39,12 @@ to get one for the internal test suite. You can run all tests via:
 $ cabal test
 ```
 
+and the benchmarks via:
+
+```
+$ cabal bench
+```
+
 ## Security
 
 These bindings aim at the maximum security achievable in a
