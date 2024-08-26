@@ -20,6 +20,7 @@ module Crypto.Secp256k1.Internal (
   , secp256k1_context_create
   , secp256k1_context_destroy
   , secp256k1_context_randomize
+  , wcontext
 
   -- ec
   , PubKey64
@@ -61,6 +62,7 @@ module Crypto.Secp256k1.Internal (
   , secp256k1_schnorrsig_verify
   ) where
 
+import Control.Exception (bracket)
 import Foreign.Ptr (Ptr)
 import Foreign.C.Types (CUChar(..), CInt(..), CUInt(..), CSize(..))
 
@@ -145,6 +147,14 @@ foreign import capi
     :: Ptr Context
     -> Ptr Seed32
     -> IO CInt
+
+-- returning the context itself and attempting to use it outside of a
+-- 'wcontext' block will produce segfaults
+wcontext :: (Ptr Context -> IO a) -> IO a
+wcontext =
+  bracket
+    (secp256k1_context_create _SECP256K1_CONTEXT_NONE)
+    secp256k1_context_destroy
 
 -- ec
 

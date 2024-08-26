@@ -37,8 +37,8 @@ suite = envWithCleanup setup destroy $ \ ~(tex, fen, pub, sig) ->
   where
     setup = do
       ptr <- SI.secp256k1_context_create SI._SECP256K1_CONTEXT_NONE
-      pub <- S.wcontext $ \tex -> S.parse_pub tex _PUB_COMPRESSED
-      sig <- S.wcontext $ \tex -> S.parse_der tex _DER
+      pub <- SI.wcontext $ \tex -> S.parse_pub (S.Context tex) _PUB_COMPRESSED
+      sig <- SI.wcontext $ \tex -> S.parse_der (S.Context tex) _DER
       pure (S.Context ptr, BS.replicate 32 0, pub, sig)
 
     destroy (S.Context tex, _, _, _) = SI.secp256k1_context_destroy tex

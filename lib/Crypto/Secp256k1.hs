@@ -61,7 +61,7 @@ module Crypto.Secp256k1 (
 
 import Control.Exception (Exception, bracket, throwIO)
 import Control.Monad (when)
-import Crypto.Secp256k1.Internal hiding (Context)
+import Crypto.Secp256k1.Internal hiding (Context, wcontext)
 import qualified Crypto.Secp256k1.Internal as I (Context)
 import GHC.Generics
 import qualified Data.ByteString as BS

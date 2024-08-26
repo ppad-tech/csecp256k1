@@ -4,7 +4,7 @@
 module Main where
 
 import Control.Monad (when)
-import Control.Exception (Exception, bracket, throwIO)
+import Control.Exception (Exception, throwIO)
 import Crypto.Secp256k1.Internal
 import qualified Data.ByteString as BS
 import Foreign.Ptr (Ptr)
@@ -50,12 +50,6 @@ units = testGroup "unit tests" [
   ]
 
 -- context
-
-wcontext :: (Ptr Context -> IO a) -> IO a
-wcontext =
-  bracket
-    (secp256k1_context_create _SECP256K1_CONTEXT_NONE)
-    secp256k1_context_destroy
 
 wentropy :: (Ptr Seed32 -> IO a) -> IO a
 wentropy c = do
