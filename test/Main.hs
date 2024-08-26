@@ -129,12 +129,12 @@ parse_xonly_test =
 
 serialize_xonly_test :: TestTree
 serialize_xonly_test =
-  testCase "serialize_xonly (success)" $ do
-    pux <- wcontext $ \tex -> do
+  testCase "serialize_xonly (success)" $
+    wcontext $ \tex -> do
       pub <- parse_pub tex _PUB_COMPRESSED
       key <- xonly tex pub
-      serialize_xonly tex key
-    assertEqual "success" pux _PUB_XONLY
+      pux <- serialize_xonly tex key
+      assertEqual "success" pux _PUB_XONLY
 
 keypair_test :: TestTree
 keypair_test =
