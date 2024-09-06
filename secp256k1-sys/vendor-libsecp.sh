@@ -12,7 +12,7 @@ else
     SECP_VENDOR_GIT_ROOT="$(realpath "$SECP_VENDOR_GIT_ROOT")"
 fi
 SECP_SYS="$SECP_VENDOR_GIT_ROOT"/secp256k1-sys
-DEFAULT_VERSION_CODE=$(grep "^version" secp256k1-sys.cabal | sed 's/\./_/g' | sed 's/version: *\([0-9]\+.*\)/\1/')
+DEFAULT_VERSION_CODE=$(grep "^version" ../ppad-csecp256k1.cabal | sed 's/\./_/g' | sed 's/version: *\([0-9]\+.*\)/\1/')
 DEFAULT_DEPEND_DIR="$SECP_SYS/depend"
 DEFAULT_SECP_REPO=https://github.com/bitcoin-core/secp256k1.git
 
