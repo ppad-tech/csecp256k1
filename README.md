@@ -1,4 +1,4 @@
-# csecp256k1
+# ppad-csecp256k1
 
 Bindings to bitcoin-core/secp256k1, which provides digital signatures
 and other cryptographic primitives on the secp256k1 elliptic curve.
