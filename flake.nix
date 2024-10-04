@@ -14,7 +14,7 @@
         pkgs = import nixpkgs { inherit system; };
         hlib = pkgs.haskell.lib;
 
-        hpkgs = pkgs.haskell.packages.ghc964.extend (new: old: {
+        hpkgs = pkgs.haskell.packages.ghc981.extend (new: old: {
           ${lib} = old.callCabal2nix lib ./. {};
         });
 
