@@ -14,11 +14,9 @@
         pkgs = import nixpkgs { inherit system; };
         hlib = pkgs.haskell.lib;
 
-        hpkgs = pkgs.haskell.packages.ghc964.override {
-          overrides = new: old: {
-            ${lib} = old.callCabal2nix lib ./. {};
-          };
-        };
+        hpkgs = pkgs.haskell.packages.ghc964.extend (new: old: {
+          ${lib} = old.callCabal2nix lib ./. {};
+        });
 
         cc    = pkgs.stdenv.cc;
         ghc   = hpkgs.ghc;
@@ -27,9 +25,7 @@
         {
           # cabal2nix disables haddock for packages with internal
           # dependencies like secp256k1-sys, so enable it manually
-          packages.${lib} = hlib.doHaddock hpkgs.${lib};
-
-          defaultPackage = self.packages.${system}.${lib};
+          packages.default = hlib.doHaddock hpkgs.${lib};
 
           devShells.default = hpkgs.shellFor {
             packages = p: [
