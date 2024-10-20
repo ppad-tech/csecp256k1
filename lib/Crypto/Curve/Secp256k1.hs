@@ -4,7 +4,7 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
--- Module: Crypto.Secp256k1
+-- Module: Crypto.Curve.Secp256k1
 -- Copyright: (c) 2024 Jared Tobin
 -- License: MIT
 -- Maintainer: Jared Tobin <jared@ppad.tech>
@@ -21,7 +21,7 @@
 -- (in the form of 'Secp256k1Exception') are the error-handling method
 -- of choice.
 
-module Crypto.Secp256k1 (
+module Crypto.Curve.Secp256k1 (
     Context(..)
   , wcontext
   , wrcontext
@@ -61,8 +61,8 @@ module Crypto.Secp256k1 (
 
 import Control.Exception (Exception, bracket, throwIO)
 import Control.Monad (when)
-import Crypto.Secp256k1.Internal hiding (Context, wcontext)
-import qualified Crypto.Secp256k1.Internal as I (Context)
+import Crypto.Curve.Secp256k1.Internal hiding (Context, wcontext)
+import qualified Crypto.Curve.Secp256k1.Internal as I (Context)
 import GHC.Generics
 import qualified Data.ByteString as BS
 import qualified Foreign.Marshal.Alloc as A (alloca, allocaBytes)

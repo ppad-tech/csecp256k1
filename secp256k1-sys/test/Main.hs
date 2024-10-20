@@ -5,7 +5,7 @@ module Main where
 
 import Control.Monad (when)
 import Control.Exception (Exception, throwIO)
-import Crypto.Secp256k1.Internal
+import Crypto.Curve.Secp256k1.Internal
 import qualified Data.ByteString as BS
 import Foreign.Ptr (Ptr)
 import qualified Foreign.Ptr as F (nullPtr, castPtr)

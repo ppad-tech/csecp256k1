@@ -4,8 +4,8 @@ module Main where
 
 import Control.DeepSeq
 import Criterion.Main
-import qualified Crypto.Secp256k1 as S
-import qualified Crypto.Secp256k1.Internal as SI
+import qualified Crypto.Curve.Secp256k1 as S
+import qualified Crypto.Curve.Secp256k1.Internal as SI
 import qualified Data.ByteString as BS
 
 instance NFData S.Context

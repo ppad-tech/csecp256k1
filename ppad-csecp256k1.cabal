@@ -28,7 +28,7 @@ library
   ghc-options:
       -Wall
   exposed-modules:
-      Crypto.Secp256k1
+      Crypto.Curve.Secp256k1
   build-depends:
       base >= 4.9 && < 5
     , bytestring >= 0.9 && < 0.13
@@ -72,7 +72,7 @@ library secp256k1-sys
   hs-source-dirs:   secp256k1-sys/lib
 
   exposed-modules:
-      Crypto.Secp256k1.Internal
+      Crypto.Curve.Secp256k1.Internal
 
   build-depends:
       base

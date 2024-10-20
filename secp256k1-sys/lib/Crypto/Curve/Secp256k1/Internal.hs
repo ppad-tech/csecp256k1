@@ -1,6 +1,6 @@
 {-# LANGUAGE CApiFFI #-}
 
-module Crypto.Secp256k1.Internal (
+module Crypto.Curve.Secp256k1.Internal (
   -- constants
     _DER_BYTES
   , _PUB_BYTES_INTERNAL
