@@ -27,9 +27,9 @@ module Crypto.Curve.Secp256k1 (
   , wrcontext
 
   , Sig
-  , sign
+  , sign_ecdsa
+  , verify_ecdsa
   , sign_schnorr
-  , verify
   , verify_schnorr
   , ecdh
 
@@ -367,12 +367,12 @@ tweak_sec_mul (Context tex) key wee
 --
 --   >>> wrcontext entropy $ \tex -> sign tex sec msg
 --   "<bitcoin-core/secp256k1 signature>"
-sign
+sign_ecdsa
   :: Context
   -> BS.ByteString -- ^ 32-byte secret key
   -> BS.ByteString -- ^ 32-byte message hash
   -> IO Sig
-sign (Context tex) key msg
+sign_ecdsa (Context tex) key msg
   | BS.length key /= 32 || BS.length msg /= 32 = throwIO CSecp256k1Error
   | otherwise = A.allocaBytes _SIG_BYTES $ \out ->
       BS.useAsCString msg $ \(F.castPtr -> has) ->
@@ -392,13 +392,13 @@ sign (Context tex) key msg
 --   True
 --   >>> wcontext $ \tex -> verify tex pub msg bad_sig
 --   False
-verify
+verify_ecdsa
   :: Context
   -> Pub
   -> BS.ByteString -- ^ 32-byte message hash
   -> Sig
   -> IO Bool
-verify (Context tex) (Pub pub) msg (Sig sig)
+verify_ecdsa (Context tex) (Pub pub) msg (Sig sig)
   | BS.length msg /= 32 = throwIO CSecp256k1Error
   | otherwise = BS.useAsCString pub $ \(F.castPtr -> key) ->
       BS.useAsCString sig $ \(F.castPtr -> sip) ->

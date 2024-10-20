@@ -23,8 +23,8 @@ suite :: Benchmark
 suite = envWithCleanup setup destroy $ \ ~(tex, fen, pub, sig) ->
     bgroup "csecp256k1" [
         bgroup "ecdsa" [
-          bench "sign" . nfIO $ S.sign tex _SEC _HAS
-        , bench "verify" . nfIO $ S.verify tex pub _HAS sig
+          bench "sign" . nfIO $ S.sign_ecdsa tex _SEC _HAS
+        , bench "verify" . nfIO $ S.verify_ecdsa tex pub _HAS sig
         ]
       , bgroup "schnorr" [
           bench "sign" . nfIO $ S.sign_schnorr tex _HAS _SEC fen

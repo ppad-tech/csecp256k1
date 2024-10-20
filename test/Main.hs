@@ -26,8 +26,8 @@ units = testGroup "unit tests" [
   , parse_xonly_test
   , serialize_xonly_test
   , keypair_test
-  , sign_test
-  , verify_test
+  , sign_ecdsa_test
+  , verify_ecdsa_test
   , sign_schnorr_test
   , verify_schnorr_test
   ]
@@ -147,19 +147,19 @@ keypair_test =
       assertEqual "success" sec _SEC
       assertEqual "success" ser _PUB_COMPRESSED
 
-sign_test :: TestTree
-sign_test = testCase "sign (success)" $
+sign_ecdsa_test :: TestTree
+sign_ecdsa_test = testCase "sign_ecdsa (success)" $
   wcontext $ \tex -> do
-    sig <- sign tex _SEC _HAS
+    sig <- sign_ecdsa tex _SEC _HAS
     der <- serialize_der tex sig
     assertEqual "success" _DER der
 
-verify_test :: TestTree
-verify_test = testCase "verify (success)" $
+verify_ecdsa_test :: TestTree
+verify_ecdsa_test = testCase "verify_ecdsa (success)" $
   wcontext $ \tex -> do
     pub <- parse_pub tex _PUB_UNCOMPRESSED
     sig <- parse_der tex _DER
-    suc <- verify tex pub _HAS sig
+    suc <- verify_ecdsa tex pub _HAS sig
     assertBool "success" suc
 
 sign_schnorr_test :: TestTree
