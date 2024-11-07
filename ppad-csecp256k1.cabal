@@ -1,6 +1,6 @@
 cabal-version:      3.0
 name:               ppad-csecp256k1
-version:            0.1.0
+version:            0.2.0
 synopsis:           bitcoin-core/secp256k1 bindings
 license:            MIT
 license-file:       LICENSE

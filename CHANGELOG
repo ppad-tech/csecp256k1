@@ -1,5 +1,10 @@
 # changelog
 
+- 0.2.0 (2024-11-07)
+  * w{r}context now returns IO () to make leaking context impossible.
+  * Assorted api changes to more closely match ppad-secp256k1.
+  * Pub and XOnlyPub data constructors are now exported.
+
 - 0.1.0 (2024-03-12)
   Initial release, binding to bitcoin-core/secp256k1 v0.4.1.
 
