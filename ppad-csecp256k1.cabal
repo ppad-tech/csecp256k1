@@ -41,6 +41,7 @@ test-suite csecp256k1-tests
   main-is:             Main.hs
   other-modules:
       Wycheproof
+    , BIP340
 
   ghc-options:
     -rtsopts -Wall

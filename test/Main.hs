@@ -5,24 +5,33 @@ module Main where
 
 import Crypto.Curve.Secp256k1
 import qualified Data.Aeson as A
+import qualified Data.Attoparsec.ByteString.Char8 as AT
 import qualified Data.ByteString as BS
 import qualified Data.Text.IO as TIO
 import Test.Tasty
 import Test.Tasty.HUnit
 import qualified Wycheproof as W
+import qualified BIP340
 
 main :: IO ()
 main = do
   wp_ecdsa_sha256_bitcoin <- TIO.readFile
     "etc/ecdsa_secp256k1_sha256_bitcoin_test.json"
-  let vec = A.decodeStrictText wp_ecdsa_sha256_bitcoin :: Maybe W.Wycheproof
-  case vec of
+  bip340 <- BS.readFile "etc/bip-0340-test-vectors.csv"
+  let duo = do
+        wyc <- A.decodeStrictText wp_ecdsa_sha256_bitcoin :: Maybe W.Wycheproof
+        bip <- case AT.parseOnly BIP340.cases bip340 of
+                 Left _ -> Nothing
+                 Right b -> pure b
+        pure (wyc, bip)
+  case duo of
     Nothing -> error "couldn't parse wycheproof vectors"
-    Just W.Wycheproof {..} -> wcontext $ \tex -> do
+    Just (W.Wycheproof {..}, bip) -> wcontext $ \tex -> do
       tree <- traverse (W.execute_group tex) wp_testGroups
       defaultMain $ testGroup "ppad-csecp256k1" [
           units
         , wycheproof_ecdsa_verify_tests "(ecdsa, sha256, low-s)" tree
+        -- , testGroup "bip0340 vectors (schnorr)" (fmap BIP340.execute bip)
         ]
 
 wycheproof_ecdsa_verify_tests :: String -> [TestTree] -> TestTree
