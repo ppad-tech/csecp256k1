@@ -38,7 +38,7 @@ module Crypto.Curve.Secp256k1 (
   , parse_compact
   , serialize_compact
 
-  , Pub
+  , Pub(..)
   , derive_pub
   , parse_pub
   , tweak_pub_add
@@ -47,7 +47,7 @@ module Crypto.Curve.Secp256k1 (
   , tweak_sec_mul
   , serialize_pub
   , serialize_pub_u
-  , XOnlyPub
+  , XOnlyPub(..)
   , xonly
   , parse_xonly
   , serialize_xonly
