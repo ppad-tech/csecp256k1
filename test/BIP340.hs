@@ -13,19 +13,8 @@ import Crypto.Curve.Secp256k1
 import qualified Data.Attoparsec.ByteString.Char8 as AT
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base16 as B16
-import qualified GHC.Num.Integer as I
 import Test.Tasty
 import Test.Tasty.HUnit
-
--- XX make a test prelude instead of copying/pasting these things everywhere
-
-fi :: (Integral a, Num b) => a -> b
-fi = fromIntegral
-{-# INLINE fi #-}
-
-roll :: BS.ByteString -> Integer
-roll = BS.foldl' unstep 0 where
-  unstep a (fi -> b) = (a `I.integerShiftL` 8) `I.integerOr` b
 
 data Case = Case {
     c_index   :: !Int
@@ -38,29 +27,28 @@ data Case = Case {
   , c_comment :: !BS.ByteString
   } deriving Show
 
-execute = undefined
-
--- execute :: Context -> Case -> TestTree
--- execute tex Case {..} = testCase ("bip0340 " <> show c_index) $ do
---   pub <- try (parse_xonly tex (B16.decodeLenient c_pk))
---   case pub of
---     Left _ -> assertBool mempty (not c_res)
---     Right pk -> do
---       if   c_sk == mempty
---       then do -- no signature; test verification
---         ver <- verify_schnorr tex pk c_msg c_sig
---         if   c_res
---         then assertBool mempty ver
---         else assertBool mempty (not ver)
---       -- XX test pubkey derivation from sk
---       else do -- signature present; test sig too
---         let sk = roll c_sk
---         sig <- sign_schnorr tex c_msg sk c_aux
---         ver <- verify_schnorr tex pk c_msg sig
---         assertEqual mempty c_sig sig
---         if   c_res
---         then assertBool mempty ver
---         else assertBool mempty (not ver)
+execute :: Context -> Case -> TestTree
+execute tex Case {..} = testCase ("bip0340 " <> show c_index) $ do
+  par <- try (parse_xonly tex (B16.decodeLenient c_pk))
+          :: IO (Either Secp256k1Exception XOnlyPub)
+  case par of
+    Left _ -> assertBool mempty (not c_res)
+    Right (XOnlyPub pub) -> do
+      let pk = Pub pub
+      if   c_sk == mempty
+      then do -- no signature; test verification
+        ver <- verify_schnorr tex pk c_msg c_sig
+        if   c_res
+        then assertBool mempty ver
+        else assertBool mempty (not ver)
+      -- XX test pubkey derivation from sk
+      else do -- signature present; test sig too
+        sig <- sign_schnorr tex c_msg c_sk c_aux
+        ver <- verify_schnorr tex pk c_msg sig
+        assertEqual mempty c_sig sig
+        if   c_res
+        then assertBool mempty ver
+        else assertBool mempty (not ver)
 
 header :: AT.Parser ()
 header = do

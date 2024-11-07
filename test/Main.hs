@@ -5,7 +5,7 @@ module Main where
 
 import Crypto.Curve.Secp256k1
 import qualified Data.Aeson as A
-import qualified Data.Attoparsec.ByteString.Char8 as AT
+import qualified Data.Attoparsec.ByteString as AT
 import qualified Data.ByteString as BS
 import qualified Data.Text.IO as TIO
 import Test.Tasty
@@ -31,7 +31,7 @@ main = do
       defaultMain $ testGroup "ppad-csecp256k1" [
           units
         , wycheproof_ecdsa_verify_tests "(ecdsa, sha256, low-s)" tree
-        -- , testGroup "bip0340 vectors (schnorr)" (fmap BIP340.execute bip)
+        , testGroup "bip0340 vectors (schnorr)" (fmap (BIP340.execute tex) bip)
         ]
 
 wycheproof_ecdsa_verify_tests :: String -> [TestTree] -> TestTree
