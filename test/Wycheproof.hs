@@ -13,24 +13,11 @@ import Crypto.Curve.Secp256k1
 import qualified Crypto.Hash.SHA256 as SHA256
 import Data.Aeson ((.:))
 import qualified Data.Aeson as A
-import qualified Data.Attoparsec.ByteString as AT
-import qualified Data.Bits as B
-import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base16 as B16
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
-import qualified GHC.Num.Integer as I
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertBool, testCase)
-
-fi :: (Integral a, Num b) => a -> b
-fi = fromIntegral
-{-# INLINE fi #-}
-
--- big-endian bytestring decoding
-roll :: BS.ByteString -> Integer
-roll = BS.foldl' unstep 0 where
-  unstep a (fi -> b) = (a `I.integerShiftL` 8) `I.integerOr` b
 
 execute_group :: Context -> EcdsaTestGroup -> IO TestTree
 execute_group tex EcdsaTestGroup {..} = do
@@ -44,7 +31,7 @@ execute_group tex EcdsaTestGroup {..} = do
 
 execute :: Context -> Pub -> EcdsaVerifyTest -> TestTree
 execute tex pub EcdsaVerifyTest {..} = testCase report $ do
-    let msg = B16.decodeLenient (TE.encodeUtf8 t_msg)
+    let msg = SHA256.hash (B16.decodeLenient (TE.encodeUtf8 t_msg))
         sig = B16.decodeLenient (TE.encodeUtf8 t_sig)
     syg <- try (parse_der tex sig) :: IO (Either Secp256k1Exception Sig)
     case syg of
