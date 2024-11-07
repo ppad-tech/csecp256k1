@@ -34,10 +34,37 @@
         "type": "github"
       }
     },
-    "root": {
+    "ppad-sha256": {
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1728824578,
+        "narHash": "sha256-sMZLvmbl3fBUHpBePzGuLdUyUALba/P5DCgKVgqEH1k=",
+        "ref": "master",
+        "rev": "3cc6c146ae36f67d73c6c207486a199dbc77658e",
+        "revCount": 82,
+        "type": "git",
+        "url": "git://git.ppad.tech/sha256.git"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "git://git.ppad.tech/sha256.git"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flake-utils": [
+          "ppad-sha256",
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "ppad-sha256",
+          "nixpkgs"
+        ],
+        "ppad-sha256": "ppad-sha256"
       }
     },
     "systems": {

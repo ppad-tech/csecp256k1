@@ -1,14 +1,33 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Main where
 
-import qualified Data.ByteString as BS
 import Crypto.Curve.Secp256k1
+import qualified Data.Aeson as A
+import qualified Data.ByteString as BS
+import qualified Data.Text.IO as TIO
 import Test.Tasty
 import Test.Tasty.HUnit
+import qualified Wycheproof as W
 
 main :: IO ()
-main = defaultMain units
+main = do
+  wp_ecdsa_sha256_bitcoin <- TIO.readFile
+    "etc/ecdsa_secp256k1_sha256_bitcoin_test.json"
+  let vec = A.decodeStrictText wp_ecdsa_sha256_bitcoin :: Maybe W.Wycheproof
+  case vec of
+    Nothing -> error "couldn't parse wycheproof vectors"
+    Just W.Wycheproof {..} -> wcontext $ \tex -> do
+      tree <- traverse (W.execute_group tex) wp_testGroups
+      defaultMain $ testGroup "ppad-csecp256k1" [
+          units
+        , wycheproof_ecdsa_verify_tests "(ecdsa, sha256, low-s)" tree
+        ]
+
+wycheproof_ecdsa_verify_tests :: String -> [TestTree] -> TestTree
+wycheproof_ecdsa_verify_tests msg ts =
+  testGroup ("wycheproof vectors " <> msg) ts
 
 units :: TestTree
 units = testGroup "unit tests" [

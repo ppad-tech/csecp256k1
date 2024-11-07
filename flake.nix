@@ -2,11 +2,16 @@
   description = "ppad-csecp256k1";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
+    ppad-sha256 = {
+      type = "git";
+      url  = "git://git.ppad.tech/sha256.git";
+      ref  = "master";
+    };
+    flake-utils.follows = "ppad-sha256/flake-utils";
+    nixpkgs.follows = "ppad-sha256/nixpkgs";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, ppad-sha256 }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         lib = "ppad-csecp256k1";
@@ -14,8 +19,13 @@
         pkgs = import nixpkgs { inherit system; };
         hlib = pkgs.haskell.lib;
 
+        sha256 = ppad-sha256.packages.${system}.default;
+
         hpkgs = pkgs.haskell.packages.ghc981.extend (new: old: {
-          ${lib} = old.callCabal2nix lib ./. {};
+          ppad-sha256 = sha256;
+          ${lib} = new.callCabal2nix lib ./. {
+            ppad-sha256 = new.ppad-sha256;
+          };
         });
 
         cc    = pkgs.stdenv.cc;
