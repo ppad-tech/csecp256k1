@@ -1,5 +1,8 @@
 # ppad-csecp256k1
 
+![](https://img.shields.io/badge/license-MIT-brightgreen)
+[![](https://img.shields.io/badge/haddock-csecp256k1-lightblue)](https://docs.ppad.tech/csecp256k1)
+
 Bindings to bitcoin-core/secp256k1, which provides digital signatures
 and other cryptographic primitives on the secp256k1 elliptic curve.
 
