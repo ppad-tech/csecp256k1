@@ -10,6 +10,8 @@ This library exposes a minimal subset of the underlying library, mainly
 supporting ECDSA/Schnorr signatures and ECDH secret computation, as well
 as utilities for public key manipulation.
 
+For a pure Haskell secp256k1 implementation, see [ppad-secp256k1][ppads].
+
 ## Documentation
 
 API documentation and examples are hosted at
@@ -108,6 +110,7 @@ This implementation has benefited greatly and uses modified versions of
 code from both [secp256k1-haskell][hsecp] (test cases, FFI/bytestring
 manipulation) and [rust-secp256k1][rsecp] (dependency vendoring).
 
+[ppads]: https://github.com/ppad-tech/secp256k1
 [nixos]: https://nixos.org/
 [flake]: https://nixos.org/manual/nix/unstable/command-ref/new-cli/nix3-flake.html
 [hadoc]: https://docs.ppad.tech/csecp256k1
