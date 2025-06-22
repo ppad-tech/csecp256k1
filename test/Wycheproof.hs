@@ -13,15 +13,21 @@ import Crypto.Curve.Secp256k1
 import qualified Crypto.Hash.SHA256 as SHA256
 import Data.Aeson ((.:))
 import qualified Data.Aeson as A
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base16 as B16
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertBool, testCase)
 
+decodeLenient :: BS.ByteString -> BS.ByteString
+decodeLenient bs = case B16.decode bs of
+  Nothing -> error "bang"
+  Just b -> b
+
 execute_group :: Context -> EcdsaTestGroup -> IO TestTree
 execute_group tex EcdsaTestGroup {..} = do
-    let raw = B16.decodeLenient (TE.encodeUtf8 pk_uncompressed)
+    let raw = decodeLenient (TE.encodeUtf8 pk_uncompressed)
     pub <- parse_pub tex raw
     let tests = fmap (execute tex pub) etg_tests
     pure (testGroup msg tests)
@@ -31,8 +37,8 @@ execute_group tex EcdsaTestGroup {..} = do
 
 execute :: Context -> Pub -> EcdsaVerifyTest -> TestTree
 execute tex pub EcdsaVerifyTest {..} = testCase report $ do
-    let msg = SHA256.hash (B16.decodeLenient (TE.encodeUtf8 t_msg))
-        sig = B16.decodeLenient (TE.encodeUtf8 t_sig)
+    let msg = SHA256.hash (decodeLenient (TE.encodeUtf8 t_msg))
+        sig = decodeLenient (TE.encodeUtf8 t_sig)
     syg <- try (parse_der tex sig) :: IO (Either Secp256k1Exception Sig)
     case syg of
       Left _  -> assertBool mempty (t_result == "invalid")

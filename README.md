@@ -23,38 +23,34 @@ As we bind to libsecp256k1, the resulting functions are very fast:
 
 ```
   benchmarking csecp256k1/ecdsa/sign
-  time                 33.67 μs   (33.43 μs .. 34.00 μs)
-                       1.000 R²   (0.999 R² .. 1.000 R²)
-  mean                 33.74 μs   (33.64 μs .. 33.87 μs)
-  std dev              378.5 ns   (259.2 ns .. 606.8 ns)
+  time                 13.31 μs   (13.30 μs .. 13.31 μs)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 13.33 μs   (13.32 μs .. 13.33 μs)
+  std dev              11.15 ns   (8.932 ns .. 15.01 ns)
 
   benchmarking csecp256k1/ecdsa/verify
-  time                 38.01 μs   (37.44 μs .. 38.65 μs)
-                       0.999 R²   (0.998 R² .. 1.000 R²)
-  mean                 37.82 μs   (37.56 μs .. 38.16 μs)
-  std dev              912.8 ns   (657.5 ns .. 1.263 μs)
-  variance introduced by outliers: 22% (moderately inflated)
+  time                 12.35 μs   (12.34 μs .. 12.38 μs)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 12.35 μs   (12.35 μs .. 12.36 μs)
+  std dev              21.83 ns   (9.273 ns .. 47.76 ns)
 
   benchmarking csecp256k1/schnorr/sign
-  time                 49.97 μs   (49.60 μs .. 50.41 μs)
-                       0.999 R²   (0.999 R² .. 1.000 R²)
-  mean                 49.95 μs   (49.54 μs .. 50.54 μs)
-  std dev              1.618 μs   (1.200 μs .. 2.399 μs)
-  variance introduced by outliers: 34% (moderately inflated)
+  time                 18.35 μs   (18.35 μs .. 18.36 μs)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 18.35 μs   (18.35 μs .. 18.35 μs)
+  std dev              5.990 ns   (4.283 ns .. 9.131 ns)
 
   benchmarking csecp256k1/schnorr/verify
-  time                 41.84 μs   (41.32 μs .. 42.26 μs)
-                       0.999 R²   (0.998 R² .. 0.999 R²)
-  mean                 41.50 μs   (41.06 μs .. 41.94 μs)
-  std dev              1.432 μs   (1.167 μs .. 1.715 μs)
-  variance introduced by outliers: 37% (moderately inflated)
+  time                 14.15 μs   (14.14 μs .. 14.15 μs)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 14.14 μs   (14.13 μs .. 14.15 μs)
+  std dev              30.51 ns   (14.54 ns .. 57.66 ns)
 
   benchmarking csecp256k1/ecdh/ecdh
-  time                 47.43 μs   (46.78 μs .. 48.19 μs)
-                       0.998 R²   (0.997 R² .. 0.999 R²)
-  mean                 46.86 μs   (46.33 μs .. 47.58 μs)
-  std dev              2.075 μs   (1.609 μs .. 2.747 μs)
-  variance introduced by outliers: 49% (moderately inflated)
+  time                 15.02 μs   (15.02 μs .. 15.03 μs)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 15.02 μs   (15.00 μs .. 15.03 μs)
+  std dev              34.78 ns   (10.81 ns .. 71.53 ns)
 ```
 
 ## Security

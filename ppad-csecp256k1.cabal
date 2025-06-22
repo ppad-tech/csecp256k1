@@ -50,8 +50,8 @@ test-suite csecp256k1-tests
       aeson
     , attoparsec
     , base
-    , base16-bytestring
     , bytestring
+    , ppad-base16
     , ppad-csecp256k1
     , ppad-sha256
     , tasty

@@ -16,6 +16,11 @@ import qualified Data.ByteString.Base16 as B16
 import Test.Tasty
 import Test.Tasty.HUnit
 
+decodeLenient :: BS.ByteString -> BS.ByteString
+decodeLenient bs = case B16.decode bs of
+  Nothing -> error "bang"
+  Just b -> b
+
 data Case = Case {
     c_index   :: !Int
   , c_sk      :: !BS.ByteString
@@ -29,7 +34,7 @@ data Case = Case {
 
 execute :: Context -> Case -> TestTree
 execute tex Case {..} = testCase ("bip0340 " <> show c_index) $ do
-  par <- try (parse_xonly tex (B16.decodeLenient c_pk))
+  par <- try (parse_xonly tex (decodeLenient c_pk))
           :: IO (Either Secp256k1Exception XOnlyPub)
   case par of
     Left _ -> assertBool mempty (not c_res)
@@ -59,15 +64,15 @@ test_case :: AT.Parser Case
 test_case = do
   c_index <- AT.decimal AT.<?> "index"
   _ <- AT.char ','
-  c_sk <- fmap B16.decodeLenient (AT.takeWhile (/= ',') AT.<?> "sk")
+  c_sk <- fmap decodeLenient (AT.takeWhile (/= ',') AT.<?> "sk")
   _ <- AT.char ','
   c_pk <- AT.takeWhile1 (/= ',') AT.<?> "pk"
   _ <- AT.char ','
-  c_aux <- fmap B16.decodeLenient (AT.takeWhile (/= ',') AT.<?> "aux")
+  c_aux <- fmap decodeLenient (AT.takeWhile (/= ',') AT.<?> "aux")
   _ <- AT.char ','
-  c_msg <- fmap B16.decodeLenient (AT.takeWhile (/= ',') AT.<?> "msg")
+  c_msg <- fmap decodeLenient (AT.takeWhile (/= ',') AT.<?> "msg")
   _ <- AT.char ','
-  c_sig <- fmap B16.decodeLenient (AT.takeWhile1 (/= ',') AT.<?> "sig")
+  c_sig <- fmap decodeLenient (AT.takeWhile1 (/= ',') AT.<?> "sig")
   _ <- AT.char ','
   c_res <- (AT.string "TRUE" *> pure True) <|> (AT.string "FALSE" *> pure False)
             AT.<?> "res"
