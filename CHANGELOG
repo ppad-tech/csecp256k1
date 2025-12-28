@@ -1,5 +1,8 @@
 # changelog
 
+- 0.2.1 (2025-12-28)
+  * Tests with GHC 9.10.3.
+
 - 0.2.0 (2024-11-07)
   * w{r}context now returns IO () to make leaking context impossible.
   * Assorted api changes to more closely match ppad-secp256k1.

@@ -37,7 +37,7 @@
         base16 = ppad-base16.packages.${system}.default;
         sha256 = ppad-sha256.packages.${system}.default;
 
-        hpkgs = pkgs.haskell.packages.ghc981.extend (new: old: {
+        hpkgs = pkgs.haskell.packages.ghc910.extend (new: old: {
           ppad-base16 = base16;
           ppad-sha256 = sha256;
           ${lib} = new.callCabal2nix lib ./. {
